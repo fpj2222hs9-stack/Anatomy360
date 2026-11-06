@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZT513QJSXN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-ZT513QJSXN');
+</script>
+<title>إمحتب · Imhotep</title>
+<meta name="description" content="إمحتب: منصة أسئلة طبية للدفعة. أسئلة بمفاتيحها، تدريب ولفافات واختبارات بالساعة المائية، وميزان لأدائك.">
+<meta name="theme-color" content="#F6EEDA">
+<meta property="og:title" content="Imhotep · إمحتب"><meta property="og:description" content="من هنا بدأ الطب.">
+<!--@im-pwa--><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/icons/icon-192.png"><!--/@im-pwa-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -10 76 76'%3E%3Cg fill='%231E3F8F'%3E%3Crect x='2' y='55' width='60' height='7'/%3E%3Crect x='6' y='47' width='52' height='7'/%3E%3Crect x='11' y='39' width='42' height='7'/%3E%3Crect x='16' y='31' width='32' height='7'/%3E%3Crect x='21' y='23' width='22' height='7'/%3E%3Crect x='26' y='15' width='12' height='7'/%3E%3C/g%3E%3Ccircle cx='32' cy='6' r='4.4' fill='%23E3A93A'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Marcellus&family=Reem+Kufi:wght@400..700&display=swap">
+<script>
+/* before first paint: theme, font size and brightness, so nothing flashes */
+(function(){try{var s=JSON.parse(localStorage.getItem('im_settings')||'{}'),r=document.documentElement;
+if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);
+if(s.fs)r.style.setProperty('--fs',String(Math.min(1.35,Math.max(.85,+s.fs||1))));
+if(s.motion==='off')r.className='calm';
+var d=s.theme==='dark'||(s.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',d?'#0A1322':'#F6EEDA');}catch(e){}})();
+</script>
+<!--@im-css-->
+<link rel="stylesheet" href="css/design.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/screens.css">
+<link rel="stylesheet" href="css/book.css">
+<link rel="stylesheet" href="css/print.css">
+<link rel="stylesheet" href="css/tour.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/cartouche.css">
+<!--/@im-css-->
+</head>
+<body>
+<div id="splash" role="status" aria-live="polite"><div id="splashMark"></div><div class="sp-msg">بنجهّز الأسئلة…</div></div>
+<div id="app" hidden></div>
+<div id="gate" hidden></div>
+<div id="maint" hidden><div class="maint-b"><div id="maintMark"></div><h1 class="display">الموقع في صيانة</h1><p class="muted">بنحدّث الأسئلة والمفاتيح. ارجع بعد شوية.</p></div></div>
+<noscript><div style="padding:40px;text-align:center;font:600 18px sans-serif">الموقع محتاج JavaScript عشان يشتغل.</div></noscript>
+<!--@im-bank-->
+<!--/@im-bank-->
+<!--@im-js-->
+<script src="js/core.js"></script>
+<script src="js/bank.js"></script>
+<script src="js/state.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/home.js"></script>
+<script src="js/workshop.js"></script>
+<script src="js/session.js"></script>
+<script src="js/result.js"></script>
+<script src="js/report.js"></script>
+<script src="js/papyrus.js"></script>
+<script src="js/scales.js"></script>
+<script src="js/library.js"></script>
+<script src="js/printing.js"></script>
+<script src="js/mixed.js"></script>
+<script src="js/about.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/level.js"></script>
+<script src="js/cartouche.js"></script>
+<script src="js/cartouche-page.js"></script>
+<script src="js/tour.js"></script>
+<script src="js/app.js"></script>
+<!--/@im-js-->
+<script>
+(function(){ var m=document.getElementById('splashMark'); if(m&&window.IM){ m.innerHTML=IM.pyr(6,{cls:'load'}); }
+var mm=document.getElementById('maintMark'); if(mm&&window.IM){ mm.innerHTML=IM.pyr(3,{}); mm.firstChild.style.width='96px'; mm.firstChild.style.height='96px'; } })();
+</script>
+</body>
+</html>
