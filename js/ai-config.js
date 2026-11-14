@@ -7,4 +7,4 @@ window.IM.AI={on:false,base:'ai/',
   /* حورس الشات العايم (js/horus-chat.js): بيكلّم دالة Supabase باسم horus بتوكن حساب الطالب. المفتاح الحقيقي بتاع Gemini على السيرفر بس، مش هنا.
      pilot:true = مقفول للطلبة وبيتفتح بس على متصفح فتح الموقع مرة بـ ?horus=1 (وبيتقفل بـ ?horus=0). بيشتغل بس لو حفظ التقدّم بحساب جوجل شغّال.
      خطوات التركيب: tools/horus/README.md. */
-  chat:{on:true,pilot:false,path:'/functions/v1/horus'}};
+  chat:{on:true,pilot:true,path:'/functions/v1/horus'}};
