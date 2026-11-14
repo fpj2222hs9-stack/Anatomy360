@@ -9,7 +9,7 @@
    خطوات التركيب كاملة في tools/cloud/README.md. */
 window.IM.CLOUD = {
   on: true,
-  pilot: false,
+  pilot: true,
   required: true,
   url: 'https://uaxreejcuantlwtuadtv.supabase.co',
   anon: 'sb_publishable_3CwrrLq6eB1staS_EI_IMQ_uD0AJh74',
