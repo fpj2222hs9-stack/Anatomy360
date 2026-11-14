@@ -1,0 +1,4 @@
+This is a separate server-enforced expanded retrieval attempt after the focused attempt did not produce decisive evidence.
+Reformulate the search using: alternative medical synonyms and eponyms; abbreviations and spelling variants; the concept represented by the stored answer rather than its option letter; the key term in every option; likely textbook headings; and the relevant mechanism, clinical finding, investigation, treatment, or complication.
+For negative, EXCEPT, FALSE, or inverse stems, also search the corresponding positive rule and each option claim independently.
+Search for table rows, bullet lists, classifications, captions, and section summaries that may express the same fact without repeating the stem wording.

@@ -1,0 +1,50 @@
+{
+  "$comment": "شكل الرد المطلوب من الموديل. مقترح مبني على أسماء الحقول في البرومبتات (summary, correct_explanation, option_analysis, verification_status, correct_answer, source_sections). استبدله بالـ schema بتاعك لو مختلف، وعدّل tools/ai/imai/validate.py بالمقابل.",
+  "type": "object",
+  "required": ["verification_status", "correct_answer", "summary", "correct_explanation", "option_analysis", "source_sections"],
+  "properties": {
+    "verification_status": {
+      "type": "string",
+      "enum": ["verified", "answer_conflict", "insufficient_source", "knowledge_only"],
+      "description": "verified: الكتاب بيأكد الإجابة. answer_conflict: الكتاب بيناقض مفتاح الموقع بوضوح. insufficient_source: المقاطع ما بتحسمش. knowledge_only: الحل من المعرفة العامة بعد ما الكتب ما فيهاش دليل."
+    },
+    "correct_answer": {
+      "type": "string",
+      "description": "حرف الاختيار الصحيح (A..H). لو أكتر من إجابة صحيحة افصلهم بفاصلة. فاضي لو insufficient_source."
+    },
+    "summary": {
+      "type": "string",
+      "description": "الفكرة الأساسية. لازم تبدأ بالعربي (Arabic-led)."
+    },
+    "correct_explanation": {
+      "type": "string",
+      "description": "شرح الإجابة الصحيحة، عربي مصري مهذّب مع المصطلحات الطبية بالإنجليزي."
+    },
+    "option_analysis": {
+      "type": "array",
+      "description": "تحليل كل اختيار غير فاضي بالضبط مرة واحدة.",
+      "items": {
+        "type": "object",
+        "required": ["option", "status", "explanation"],
+        "properties": {
+          "option": { "type": "string", "description": "حرف الاختيار" },
+          "status": { "type": "string", "enum": ["correct", "incorrect", "conflict"], "description": "conflict: اختيار هو مفتاح الموقع لكن الكتاب بيناقضه" },
+          "explanation": { "type": "string", "description": "عربي، لماذا صح أو غلط" }
+        }
+      }
+    },
+    "source_sections": {
+      "type": "array",
+      "description": "مرجع لكل block استُخدم. فاضية لو knowledge_only.",
+      "items": {
+        "type": "object",
+        "required": ["citation_index", "heading"],
+        "properties": {
+          "citation_index": { "type": "integer", "description": "رقم الـ evidence block (يبدأ من 1)" },
+          "heading": { "type": "string", "description": "أقصر عنوان قسم مطبوع في الـ block منسوخ بالحرف، أو Relevant section" },
+          "quote": { "type": "string", "description": "جملة حرفية منسوخة من نفس الـ block بتحسم الإجابة (إضافة للتحقق بالكود)" }
+        }
+      }
+    }
+  }
+}

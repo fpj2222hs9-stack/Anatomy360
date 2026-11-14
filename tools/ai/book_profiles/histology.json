@@ -1,0 +1,36 @@
+{
+ "_help": "وصف كتاب الهستولوجي (ISK 101 · الجزء الأول). الأرقام من فهرس الكتاب. الفصل الأول مالوش عنوان مطبوع في الفهرس.",
+ "id": "histology",
+ "book": "ISK 101 · Histology",
+ "input": {
+  "kind": "pdf"
+ },
+ "drop": [
+  "^©\\s*Faculty of Medicine.*$",
+  "^ISK 101 — Normal Structure of the Human Body\\s*$"
+ ],
+ "first_page": 1,
+ "caps_heading": true,
+ "chapters": [
+  [
+   1,
+   "Chapter I — Introduction to Histology"
+  ],
+  [
+   5,
+   "Chapter II — Cytology"
+  ],
+  [
+   29,
+   "Chapter III — Blood"
+  ],
+  [
+   48,
+   "Chapter IV — Connective Tissue"
+  ],
+  [
+   62,
+   "Chapter V — Epithelial Tissue"
+  ]
+ ]
+}

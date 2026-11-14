@@ -1,0 +1,2 @@
+CRITICAL RETRY: The previous summary violated the language contract. Rewrite the complete JSON response now.
+The summary must begin with Arabic words, be explained in Arabic, and use English only for indispensable medical terms inside Arabic sentences.

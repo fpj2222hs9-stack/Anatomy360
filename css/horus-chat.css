@@ -1,0 +1,159 @@
+/* Imhotep · إمحتب — حورس: الشات العايم (js/horus-chat.js). الألوان والخطوط كلها من tokens الموقع (design.css)، فبيتبع الوضع الليلي لوحده. */
+
+/* ---------- الزرار العايم ---------- */
+.hc-fab{position:fixed;left:16px;bottom:16px;z-index:55;width:60px;height:60px;padding:0;display:grid;place-items:center;border-radius:50%;
+  border:2px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:0 10px 26px -10px rgba(10,19,34,.55);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.hc-fab:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 14px 30px -10px rgba(10,19,34,.6)}
+.hc-fab:active{transform:scale(.96)}
+.hc-fab.pop{animation:hcPop .45s cubic-bezier(.3,1.4,.5,1) both}
+.hc-fab-i{display:inline-flex;line-height:0}
+.hc-lock{position:absolute;right:-2px;top:-2px;width:22px;height:22px;border-radius:50%;display:none;place-items:center;background:var(--ink);color:var(--bg);border:2px solid var(--surface)}
+.hc-fab.locked .hc-lock{display:grid}
+.hc-fab.locked .hc-fab-i{opacity:.4;filter:grayscale(1)}
+.hc-fab.locked{cursor:not-allowed}
+.hc-tip{position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);white-space:nowrap;pointer-events:none;
+  background:var(--ink);color:var(--bg);font-size:.8125rem;font-weight:600;padding:6px 14px;border-radius:999px;animation:hcTip 7s ease both}
+@keyframes hcTip{0%{opacity:0;transform:translateY(-50%) translateX(-8px)}7%{opacity:1;transform:translateY(-50%)}85%{opacity:1}100%{opacity:0;visibility:hidden}}
+@keyframes hcPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+
+/* ---------- البانل ---------- */
+.hc{--k:1;position:fixed;left:16px;bottom:16px;z-index:190;width:min(410px,calc(100vw - 32px));height:min(660px,calc(100dvh - 32px));
+  display:flex;flex-direction:column;overflow:hidden;transform-origin:left bottom;
+  background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:calc(var(--r) + 6px);
+  box-shadow:0 30px 70px -22px rgba(10,19,34,.6),0 2px 0 rgba(26,34,51,.04)}
+.hc[hidden]{display:none}
+.hc.is-opening{animation:hcFrameIn calc(var(--k) * .38s) cubic-bezier(.2,.9,.3,1) both}
+.hc.is-closing.shrink{animation:hcFrameOut calc(var(--k) * .3s) ease-in both}
+@keyframes hcFrameIn{from{opacity:0;transform:translateY(24px) scale(.2)}to{opacity:1;transform:none}}
+@keyframes hcFrameOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(24px) scale(.2)}}
+@media (max-width:640px){
+  .hc{left:0;right:0;top:0;bottom:0;width:auto;height:100dvh;border:0;border-radius:0}
+  .hc-fab{bottom:calc(78px + env(safe-area-inset-bottom))}
+}
+@media (max-width:640px) and (min-height:1px){ .hc-ft{padding-bottom:calc(8px + env(safe-area-inset-bottom))} }
+
+.hc-hd{flex:none;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 12px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.hc-mini{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:0}
+.hc-mini>span{display:inline-flex;line-height:0}
+.hc-id{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hc-name{font:600 1.1875rem/1 var(--f-display);color:var(--ink)}
+.hc-sub{font-size:.72rem;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-left{flex:none;font-size:.72rem;color:var(--ink-2);white-space:nowrap}
+.hc-left.zero{color:var(--bad);font-weight:700}
+.hc-clr.armed{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+
+.hc-sc{flex:none;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.hc-chip{flex:none;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.hc-chip:hover{border-color:var(--tur);color:var(--tur)}
+.hc-chip[aria-pressed="true"]{background:var(--tur-soft);border-color:var(--tur);color:var(--tur)}
+.hc-chip.sug{height:auto;min-height:34px;padding:7px 14px;white-space:normal;text-align:start;line-height:1.6;border-radius:12px}
+
+.hc-body{flex:1;min-height:0;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain;scroll-behavior:smooth}
+html.calm .hc-body{scroll-behavior:auto}
+.hc-m{display:flex;gap:8px;max-width:100%;animation:fadeUp .25s both}
+.hc-m.u{align-self:flex-start;max-width:88%}
+.hc-m.a{align-self:stretch}
+.hc-av{flex:none;line-height:0;margin-top:2px}
+.hc-bub{min-width:0;border-radius:12px;padding:10px 13px;font-size:.9375rem;line-height:1.95;overflow-wrap:anywhere}
+.hc-m.u .hc-bub{background:var(--pri);color:var(--pri-on);border-start-start-radius:3px;white-space:pre-wrap}
+.hc-m.a .hc-bub{flex:1;background:var(--surface-2);border:1px solid var(--line);border-start-start-radius:3px}
+.hc-md p{margin:0 0 8px}
+.hc-md ul{margin:2px 0 8px;padding-inline-start:20px}
+.hc-md li{margin:0 0 2px}
+.hc-md>:last-child{margin-bottom:0}
+.hc-md b{font-weight:700;color:var(--ink)}
+.lat{unicode-bidi:isolate;font-family:var(--f-body)}
+.hc-ca{margin:0 0 8px;font-size:.875rem;color:var(--ink-2)}
+.hc-ca b{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;margin-inline:3px;border-radius:50%;background:var(--surface);border:1px solid var(--line-2);color:var(--ink)}
+.hc-kd{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px dashed var(--line-2);color:var(--ink-2);font-size:.8125rem;line-height:1.75}
+.hc-kd.book{background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold-ink)}
+.hc-kd svg{flex:none;margin-top:3px}
+.hc-meta{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.hc-st{height:26px}
+.hc-src{margin-top:8px;font-size:.8rem}
+.hc-src summary{cursor:pointer;color:var(--ink-2);font-weight:600;padding:2px 0}
+.hc-src ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.hc-src li strong{display:block;font-size:.8rem}
+.hc-src li span{display:block;color:var(--ink-2);font-size:.74rem}
+.hc-think .hc-bub{background:transparent;border-style:dashed;color:var(--ink-2);animation:hcDots 1.6s ease-in-out infinite}
+@keyframes hcDots{50%{opacity:.55}}
+.hc-err{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:var(--bad-soft);color:var(--bad);font-size:.875rem;line-height:1.75}
+.hc-err svg{flex:none;margin-top:4px}
+.hc-err span{flex:1;min-width:0}
+
+.hc-empty{margin:auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:16px 6px 10px}
+.hc-empty-i{display:inline-flex;line-height:0}
+.hc-empty h3{margin:0;font-size:1.25rem}
+.hc-empty p{margin:0;font-size:.875rem;line-height:1.85;max-width:320px}
+.hc-sug{display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px;margin-top:4px}
+.hc-fine{font-size:.74rem !important;color:var(--ink-3);max-width:320px}
+.hc-fine a{color:inherit}
+
+.hc-ft{flex:none;padding:10px 12px 8px;border-top:1px solid var(--line);background:var(--surface)}
+.hc-rw{display:flex;gap:8px;align-items:flex-end}
+.hc-in{flex:1;min-width:0;min-height:44px;max-height:128px;resize:none;padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);color:var(--ink);font-size:1rem;line-height:1.6}
+.hc-in:focus{outline:2px solid var(--tur);outline-offset:1px;border-color:var(--tur)}
+.hc-in:disabled{opacity:.6}
+.hc-send{flex:none;min-width:44px;padding:0}
+.hc-send::after{display:none}
+.hc-send:disabled{opacity:.5;cursor:not-allowed}
+.hc-note{margin:6px 0 0;text-align:center;font-size:.7rem;color:var(--ink-3);line-height:1.6}
+.hc-note a{color:inherit}
+
+/* ---------- افتتاحية/قفلة الشعار: النجمة تلمع وتطلع تبقى شمس فوق الهرم، والهرم يتبني من تحت، والعين تفضل تحت ---------- */
+.hc-cur{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;
+  background:linear-gradient(180deg,var(--bg-2),var(--surface))}
+.hc-em{position:relative;width:150px;height:253px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.hc-em-p,.hc-em-e{line-height:0}
+.hc-fly{position:absolute;left:50%;top:var(--sy);line-height:0;opacity:0;transform:translate(-50%,-50%);filter:drop-shadow(0 0 7px var(--glow))}
+.hc-fly path{fill:var(--sun)}
+.hc-cur-t{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:0}
+.hc-cur-t b{font:600 1.5rem/1 var(--f-display);color:var(--ink)}
+.hc-cur-t span{font-size:.8rem;color:var(--ink-2)}
+@media (max-height:560px){ .hc-em{transform:scale(.62)} .hc-cur{gap:0} }
+
+/* فتح */
+.hc-cur.in .hc-em-e{animation:hcPop calc(var(--k) * .45s) calc(var(--k) * .25s) cubic-bezier(.3,1.3,.5,1) both}
+.hc-cur.in .hc-em-e .hz-starw{animation:hcGlow calc(var(--k) * .7s) calc(var(--k) * .8s) ease-in both,hcStarBack calc(var(--k) * .5s) calc(var(--k) * 2s) ease-out forwards}
+.hc-cur.in .hc-em-e .hz-ripple{animation:hzRipple calc(var(--k) * 1.1s) calc(var(--k) * .75s) ease-out 1 both}
+.hc-cur.in .hc-fly{animation:hcFly calc(var(--k) * .7s) calc(var(--k) * 1.3s) cubic-bezier(.45,0,.25,1) both,hcFlyOut calc(var(--k) * .25s) calc(var(--k) * 2s) ease-out forwards}
+.hc-cur.in .hc-pyr .t{opacity:0;animation:hcTier calc(var(--k) * .45s) cubic-bezier(.2,.8,.2,1) both}
+.hc-cur.in .hc-pyr .t:nth-of-type(1){animation-delay:calc(var(--k) * 1.4s)}
+.hc-cur.in .hc-pyr .t:nth-of-type(2){animation-delay:calc(var(--k) * 1.49s)}
+.hc-cur.in .hc-pyr .t:nth-of-type(3){animation-delay:calc(var(--k) * 1.58s)}
+.hc-cur.in .hc-pyr .t:nth-of-type(4){animation-delay:calc(var(--k) * 1.67s)}
+.hc-cur.in .hc-pyr .t:nth-of-type(5){animation-delay:calc(var(--k) * 1.76s)}
+.hc-cur.in .hc-pyr .t:nth-of-type(6){animation-delay:calc(var(--k) * 1.85s)}
+.hc-cur.in .hc-pyr .sr{transform-origin:32px 6px;animation:hcSun calc(var(--k) * .45s) calc(var(--k) * 1.9s) cubic-bezier(.3,1.3,.5,1) both}
+.hc-cur.in .hc-cur-t{animation:hcRise calc(var(--k) * .5s) calc(var(--k) * 2.1s) ease-out both}
+.hc-cur.fade{animation:hcCurOut calc(var(--k) * .36s) ease-in forwards;pointer-events:none}
+
+/* قفل: نفس الحركة بالعكس. الهرم يتفكّك من فوق، الشمس تنزل نجمة جوه العين */
+.hc-cur.out{animation:hcCurIn calc(var(--k) * .3s) ease-out both;cursor:default}
+.hc-cur.out .hc-cur-t{opacity:1}
+.hc-cur.out .hc-pyr .t{animation:hcTier calc(var(--k) * .35s) ease-in reverse both}
+.hc-cur.out .hc-pyr .t:nth-of-type(6){animation-delay:calc(var(--k) * .3s)}
+.hc-cur.out .hc-pyr .t:nth-of-type(5){animation-delay:calc(var(--k) * .38s)}
+.hc-cur.out .hc-pyr .t:nth-of-type(4){animation-delay:calc(var(--k) * .46s)}
+.hc-cur.out .hc-pyr .t:nth-of-type(3){animation-delay:calc(var(--k) * .54s)}
+.hc-cur.out .hc-pyr .t:nth-of-type(2){animation-delay:calc(var(--k) * .62s)}
+.hc-cur.out .hc-pyr .t:nth-of-type(1){animation-delay:calc(var(--k) * .7s)}
+.hc-cur.out .hc-pyr .sr{transform-origin:32px 6px;animation:hcSun calc(var(--k) * .3s) calc(var(--k) * .3s) ease-in reverse both}
+.hc-cur.out .hc-fly{animation:hcFly calc(var(--k) * .7s) calc(var(--k) * .5s) cubic-bezier(.45,0,.25,1) reverse forwards}
+.hc-cur.out .hc-em-e .hz-starw{opacity:0;animation:hcStarBack calc(var(--k) * .4s) calc(var(--k) * 1.15s) ease-out forwards}
+.hc-cur.out .hc-em-e .hz-ripple{animation:hzRipple calc(var(--k) * 1.1s) calc(var(--k) * 1.15s) ease-out 1 both}
+
+@keyframes hcGlow{0%{transform:scale(1);opacity:1}55%{transform:scale(2.4);opacity:1}100%{transform:scale(2.9);opacity:0}}
+@keyframes hcStarBack{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes hcFly{0%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}12%{opacity:1}100%{opacity:1;transform:translate(-50%,calc(-50% - var(--dy))) scale(1)}}
+@keyframes hcFlyOut{from{opacity:1}to{opacity:0}}
+@keyframes hcTier{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes hcSun{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes hcRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes hcCurOut{from{opacity:1}to{opacity:0}}
+@keyframes hcCurIn{from{opacity:0}to{opacity:1}}
+
+html.calm .hc,html.calm .hc *,html.calm .hc-fab,html.calm .hc-fab *{animation:none !important;transition:none !important}
+@media (prefers-reduced-motion:reduce){ .hc,.hc *,.hc-fab,.hc-fab *{animation:none !important;transition:none !important} }
+@media print{ .hc,.hc-fab{display:none !important} }

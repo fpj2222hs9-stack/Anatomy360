@@ -1,0 +1,78 @@
+{
+  "_help": "كل المفاتيح السرية بتتقرا من متغيرات البيئة (اسم المتغير في key_env). ممنوع تكتب مفتاح هنا: الملف ده بيترفع على GitHub العام.",
+  "chain": ["gemini_flash_lite", "gemma", "groq"],
+  "providers": {
+    "gemini_flash_lite": {
+      "kind": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "key_env": "GEMINI_API_KEY",
+      "structured": true,
+      "rpm": 12,
+      "rpd": 450,
+      "tz": "America/Los_Angeles",
+      "_note": "الحدود المجانية بتتغيّر وجوجل بطّلت تنشرها: اتأكد من AI Studio ← Rate limits وعدّل rpm وrpd (450 هامش أمان تحت 500). واتأكد كمان من اسم الموديل الحالي في AI Studio، الاسم هنا تقدير."
+    },
+    "gemma": {
+      "kind": "gemini",
+      "model": "gemma-4-26b-a4b-it",
+      "key_env": "GEMINI_API_KEY",
+      "structured": false,
+      "json_mode": false,
+      "rpm": 25,
+      "rpd": 12000,
+      "tz": "America/Los_Angeles",
+      "_note": "نفس المفتاح بس حصة منفصلة. مفيش ضمان لـ JSON المنظّم، فالـ schema بيتبعت في البرومبت والكود بيتحقق."
+    },
+    "groq": {
+      "kind": "openai_compat",
+      "base_url": "https://api.groq.com/openai/v1",
+      "model": "openai/gpt-oss-120b",
+      "key_env": "GROQ_API_KEY",
+      "rpm": 25,
+      "rpd": 900,
+      "tpd": 180000,
+      "tz": "UTC"
+    },
+    "workers_ai": {
+      "kind": "openai_compat",
+      "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/v1",
+      "model": "@cf/google/gemma-4-26b-a4b-it",
+      "key_env": "CLOUDFLARE_API_TOKEN",
+      "rpm": 20,
+      "rpd": 200,
+      "tz": "UTC",
+      "_note": "غير مفعّل في chain. استبدل ACCOUNT_ID وأضفه للـ chain لو عايز حصة إضافية (10,000 neuron/يوم)."
+    },
+    "mock": {
+      "kind": "mock",
+      "rpm": 0,
+      "rpd": 1000000,
+      "tz": "UTC"
+    }
+  },
+  "retrieval": {
+    "kind": "local",
+    "focused_k": 6,
+    "expanded_k": 10,
+    "min_top_score": 4.0,
+    "max_block_words": 260,
+    "file_search": {
+      "provider": "gemini_flash_lite",
+      "store": "fileSearchStores/REPLACE_ME",
+      "_note": "اختياري (retrieval.kind = file_search). محتاج store متفهرس، والفهرسة ليها تكلفة على حساب جوجل: اتأكد إنها مجانية عندك."
+    }
+  },
+  "pipeline": {
+    "allow_knowledge_fallback": true,
+    "skip_subjects_without_source": true,
+    "skip_cancelled": true,
+    "max_repairs_per_stage": 1,
+    "temperature": 0.2
+  },
+  "subjects": {
+    "anatomy": { "year": "", "module": "" },
+    "histology": { "year": "", "module": "" },
+    "biochemistry": { "year": "", "module": "" },
+    "physiology": { "year": "", "module": "" }
+  }
+}
