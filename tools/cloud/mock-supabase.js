@@ -6,7 +6,7 @@
                          /__fail?n=3                    أول n طلبات على /rest بترجع 500
                          /__rows  /__reset  /__log
    حورس (js/horus-chat.js): /functions/v1/horus (GET ?me=1 و POST chat|q) + جدول horus_chat بـ RLS.
-                         /__horus?mode=ok|general|limit|busy|ai|slow|auth|off&lim=3&delay=0&reset=1   /__horusreqs   /__chat */
+                         /__horus?mode=ok|general|long|limit|busy|ai|slow|auth|off&lim=3&delay=0&reset=1   /__horusreqs   /__chat */
 'use strict';
 const http = require('http'), crypto = require('crypto');
 const ANON = 'sb_publishable_testkey';       // new-style publishable key: must go in `apikey` only (a Bearer with it is rejected, like the real platform)
@@ -102,6 +102,10 @@ function create() {
         if (hz.mode === 'auth') return send(401, { ok: false, err: 'auth' });
         if (hz.mode === 'off') return send(503, { ok: false, err: 'off' });
         hz.used[id] = (hz.used[id] || 0) + 1;
+        if (hz.mode === 'long' && b.mode !== 'q') {     // a complete, long answer (~6 K chars): the client must show every line and keep it whole
+          const items = []; for (let i = 1; i <= 80; i++) items.push('- العنصر ' + i + ' من 80 في القائمة الكاملة، سطر قصير للتأكد إن مفيش حاجة بتتقص LAST' + i);
+          return send(200, { ok: true, a: 'بص يا دكترة، دي القائمة كاملة:\n' + items.join('\n'), st: 'book', ss: [{ h: 'Axilla', b: 'Module 101', c: 'Ch 1', p: '36' }], cached: false, left: left(), lim: hz.lim });
+        }
         const gen = hz.mode === 'general';
         const ss = gen ? [] : [{ h: 'Glycolysis', b: 'Lippincott Biochemistry', c: 'Ch 8', p: '98' }];
         if (b.mode === 'q') {

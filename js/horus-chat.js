@@ -42,7 +42,7 @@ var Hs=H0;
 function nid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function okMsg(m){ return !!(m&&typeof m==='object'&&typeof m.i==='string'&&m.i.length<=40&&(m.r==='u'||m.r==='a')&&typeof m.t==='string'&&isFinite(m.ts)); }
 function clean(m){
-  var o={i:m.i,r:m.r,t:String(m.t).slice(0,m.r==='u'?1000:3600),ts:+m.ts};
+  var o={i:m.i,r:m.r,t:String(m.t).slice(0,m.r==='u'?1000:6500),ts:+m.ts};
   if(m.sid) o.sid=String(m.sid).slice(0,12);
   if(m.r==='a'){
     if(m.st==='book'||m.st==='general'||m.st==='off') o.st=m.st;
@@ -64,7 +64,12 @@ function loadH(){
   return Hs;
 }
 function saveH(){ if(Hs.uid) S.set(HK+Hs.uid,{msgs:Hs.msgs,clr:Hs.clr,sync:Hs.sync}); }
-function capH(){ Hs.msgs.sort(function(a,b){ return a.ts-b.ts; }); if(Hs.msgs.length>CAP) Hs.msgs=Hs.msgs.slice(-CAP); }
+function capH(){
+  Hs.msgs.sort(function(a,b){ return a.ts-b.ts; });
+  if(Hs.msgs.length>CAP) Hs.msgs=Hs.msgs.slice(-CAP);
+  /* الصف على الحساب ليه حد حجم (400KB في قاعدة البيانات): الإجابات الكاملة أطول، فبنشيل الأقدم لو الحجم التقديري (حرف عربي = بايتين) عدّى 300KB */
+  while(Hs.msgs.length>2&&JSON.stringify(Hs.msgs).length*2>300000) Hs.msgs.shift();
+}
 function addMsg(m){ loadH(); if(!Hs.uid) return; Hs.msgs.push(clean(m)); capH(); saveH(); scheduleSync(2500); }
 function dropMsg(id){ if(!Hs.uid) return; Hs.msgs=Hs.msgs.filter(function(m){ return m.i!==id; }); saveH(); }
 function ids(list){ return list.map(function(m){ return m.i; }).join(','); }
@@ -306,7 +311,7 @@ var ERR={
   net:'مفيش اتصال بالنت دلوقتي، أو الرد اتأخر. جرّب تاني.'
 };
 function api(body){
-  return IM.cloudCall('POST',PATH,{body:body,timeout:50000}).then(function(r){
+  return IM.cloudCall('POST',PATH,{body:body,timeout:90000}).then(function(r){
     var j=r.json||{};
     if(r.ok&&j.ok) return j;
     var e=new Error('horus'); e.j=j; e.code=j.err||(r.status===401?'auth':(r.status===429?'slow':'svc')); throw e;

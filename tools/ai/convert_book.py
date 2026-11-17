@@ -12,6 +12,13 @@
   chapters  : [[رقم أول صفحة، "عنوان الفصل"], ...] (من فهرس الكتاب)
   chapters_from_header : الفصل = العنوان الجاري في أول الصفحة
   caps_heading : سطر كله حروف كبيرة = عنوان قسم
+  (ملازم / ملخصات بجداول — اختياري)
+  input.mode        : "layout" (الافتراضي: أعمدة الجداول جنب بعض بـ ' | ') أو "raw" (ترتيب القراءة) أو "auto" (الصفحة اللي فيها جدول بأعمدة تتقرا layout والباقي raw)
+  page_from_pdf     : true = رقم الصفحة = ترتيبها في الـ PDF (للملازم اللي رقمها المطبوع = رقم صفحة الملف)
+  skip_pdf_pages    : [1, 2] صفحات الـ PDF اللي بتتخطّى (الغلاف والفهرس)
+  min_words         : صفحة كلماتها أقل من كده (صفحات فاصلة بين الأبواب) بتتخطّى
+  expand_abbr       : true = بيفك الاختصارات الشايعة (Post. Ant. Med. Lat. Sup. Inf. n. V.) وبيصلّح حروف مقروءة غلط (brachiaI ← brachial) عشان البحث يلاقيها
+  mcq               : "resolve" = صفحة أسئلة MCQ آخرها سطر إجابات نموذجي (1 -c 2-b) بيتحوّل لسطور «Model answer» فيها حرف الإجابة ونصها، وعنوان الصفحة بيبقى «<الباب> — exam MCQs»
 
 الناتج: كل صفحة قسم لوحدها (عشان رقم الصفحة في الاستشهاد يطلع دقيق):
     # عنوان الفصل        (أول صفحة في الفصل)
@@ -46,15 +53,90 @@ def is_caps_heading(ln):
     return len(letters) >= 4
 
 
+
+_ABBR = [(r'\bPost\.(?=[\s:,;)]|$)', 'Posterior'), (r'\bpost\.(?=[\s:,;)]|$)', 'posterior'), (r'\bAnt\.(?=[\s:,;)]|$)', 'Anterior'), (r'\bant\.(?=[\s:,;)]|$)', 'anterior'),
+         (r'\bMed\.(?=[\s:,;)]|$)', 'Medial'), (r'\bmed\.(?=[\s:,;)]|$)', 'medial'), (r'\bLat\.(?=[\s:,;)]|$)', 'Lateral'), (r'\blat\.(?=[\s:,;)]|$)', 'lateral'),
+         (r'\bSup\.(?=[\s:,;)]|$)', 'Superior'), (r'\bsup\.(?=[\s:,;)]|$)', 'superior'), (r'\bInf\.(?=[\s:,;)]|$)', 'Inferior'), (r'\binf\.(?=[\s:,;)]|$)', 'inferior'),
+         (r'\bn\.(?=[\s,;)]|$)', 'nerve'), (r'\bN\.(?=\s+[a-z(])', 'Nerve'), (r'(?<=[A-Za-z] )V\.(?=[\s,;)]|$)', 'vein')]
+_ABBR = [(re.compile(a), b) for a, b in _ABBR]
+_OCR = [(re.compile(r'\b([A-Za-z]{3,}a)I\b'), r'\1l'), (re.compile(r'\b([A-Za-z]{3,}a)!'), r'\1l')]
+
+
+def fix_text(line):
+    for rx, rep in _ABBR:
+        line = rx.sub(rep, line)
+    for rx, rep in _OCR:
+        line = rx.sub(rep, line)
+    return line
+
+
+# سطر الإجابات النموذجي في آخر صفحة أسئلة: "1 -c   2-b   3-b"
+MCQ_KEYS = re.compile(r'^\s*(?:\d{1,2}\s*[-–]\s*[a-eA-E]\b\s*){1,}$', re.M)
+_KEY_PAIR = re.compile(r'(\d{1,2})\s*[-–]\s*([a-eA-E])\b')
+
+
+def resolve_mcq(lines):
+    """صفحة MCQ: السطر الأخير «1 -c 2-b» بيتبدّل بسطور «Model answer (doctor's key)» فيها الحرف ونص الاختيار. لو الصفحة مش ماشية على النمط ده بترجع من غير تغيير."""
+    idx = [i for i, l in enumerate(lines) if MCQ_KEYS.match(l)]
+    if len(idx) != 1:
+        return lines, False
+    ki = idx[0]
+    pairs = [(int(n), c.lower()) for n, c in _KEY_PAIR.findall(lines[ki])]
+    if not pairs or [n for n, _ in pairs] != list(range(1, len(pairs) + 1)):
+        return lines, False
+    body = lines[:ki]
+    # start line of every question 1..n (the first matching line, in order)
+    starts, pos = [], 0
+    for n in range(1, len(pairs) + 1):
+        pat = re.compile(r'^\s*%d\s*[-.]\s*\S' % n)
+        j = next((k for k in range(pos, len(body)) if pat.match(body[k])), None)
+        if j is None:
+            return lines, False
+        starts.append(j); pos = j + 1
+    out = [l for l in body]
+    ans = []
+    for qi, (n, letter) in enumerate(pairs):
+        blk = body[starts[qi]:(starts[qi + 1] if qi + 1 < len(starts) else len(body))]
+        opt, cur = {}, None
+        for l in blk[1:]:
+            if not l.strip():
+                cur = None            # خط فاضي = خلصت الاختيارات (اللي بعده تسميات أشكال مش جزء من الاختيار)
+                continue
+            for cell in re.split(r'\s{3,}', l.strip()):
+                m = re.match(r'^([a-h])\s*[-.]\s*(.*)$', cell, re.I)
+                if m:
+                    cur = m.group(1).lower(); opt[cur] = m.group(2).strip()
+                elif cur and cell.strip():
+                    opt[cur] = (opt[cur] + ' ' + cell.strip()).strip()
+        txt = opt.get(letter, '')
+        if not txt:
+            return lines, False
+        ans.append("Model answer (the doctor's key) for question %d: %s) %s" % (n, letter, txt))
+    return out + [''] + ans, True
+
+
 def read_pages(profile, src):
     """-> [(printed_page or None, [lines])] in book order"""
     kind = profile['input']['kind']
     if kind == 'pdf':
-        out = subprocess.run(['pdftotext', '-layout', src, '-'], capture_output=True, check=True).stdout.decode('utf-8', 'replace')
-        raw = out.split('\f')
-        if raw and not raw[-1].strip():
-            raw.pop()
-        return [(None, p.split('\n')) for p in raw]
+        def pdf_pages(*flags):
+            out = subprocess.run(['pdftotext'] + list(flags) + [src, '-'], capture_output=True, check=True).stdout.decode('utf-8', 'replace')
+            pg = out.split('\f')
+            if pg and not pg[-1].strip():
+                pg.pop()
+            return pg
+        mode = profile['input'].get('mode', 'layout')
+        lay = pdf_pages('-layout')
+        if mode == 'layout':
+            return [(None, p.split('\n')) for p in lay]
+        rawp = pdf_pages()
+        res = []
+        for i, lp in enumerate(lay):
+            rp = rawp[i] if i < len(rawp) else lp
+            cells3 = sum(1 for l in lp.split('\n') if len(re.split(r'\s{3,}', l.strip())) >= 3)
+            use_layout = mode == 'layout' or (mode == 'auto' and (cells3 >= 5 or MCQ_KEYS.search(lp)))
+            res.append((None, (lp if use_layout else rp).split('\n')))
+        return res
     if kind == 'footer-txt':
         foot = re.compile(profile['input']['footer'])
         copy = re.compile(profile['input'].get('copyright', r'^©\s*Faculty of Medicine'))
@@ -96,8 +178,14 @@ def convert(profile, src):
     out, info = [], {'pages': 0, 'words': 0, 'skipped': [], 'gaps': [], 'chapters': []}
     cur_chapter, cur_head, last_no = None, None, None
     header_skip = profile.get('header') == 'first-line'
+    skip_pdf = set(int(x) for x in profile.get('skip_pdf_pages', []))
+    min_words = int(profile.get('min_words', 0))
     for idx, (no, lines) in enumerate(pages):
+        if idx + 1 in skip_pdf:
+            continue
         body = [l for l in lines]
+        if profile.get('page_from_pdf'):
+            no = idx + 1
         if no is None:
             no = printed_number(body)
         # remove printed header/footer noise
@@ -115,7 +203,18 @@ def convert(profile, src):
             first = keep[ne[0]].strip()
             if len(first) < 60 and not re.search(r'[.!?]$', first):
                 running = clean_line(first); keep[ne[0]] = ''
+        if profile.get('expand_abbr'):
+            keep = [fix_text(l) for l in keep]
+        is_mcq = False
+        if profile.get('mcq') == 'resolve':
+            keep, is_mcq = resolve_mcq(keep)
         text = [clean_line(l) for l in keep]
+        if is_mcq:
+            text = [l.replace(' | ', ' ') for l in text]      # صفحة أسئلة: مفيش جداول، الفراغات الكبيرة جوه السؤال مش أعمدة
+        if min_words and sum(len(l.split()) for l in text) < min_words:
+            if any(text):
+                info['skipped'].append(idx + 1)
+            continue
         if no is None and last_no is not None and any(text):
             no = last_no + 1
         if no is None or no < min_page or not any(text):
@@ -140,6 +239,9 @@ def convert(profile, src):
             info['chapters'].append((no, chap))
         else:
             out.append('## ' + cur_head)
+        if is_mcq:
+            out[-1] = '## ' + cur_chapter + ' \u2014 exam MCQs (past exams, with the doctor\'s model answers)'
+            info['mcq_pages'] = info.get('mcq_pages', 0) + 1
         out.append('[[p.%d]]' % no)
         for ln in text:
             if not ln:
@@ -164,7 +266,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(sys.argv[3])), exist_ok=True)
     with open(sys.argv[3], 'w', encoding='utf-8') as f:
         f.write(md)
-    print('pages: %d  words: %d  chapters: %d' % (info['pages'], info['words'], len(info['chapters'])))
+    print('pages: %d  words: %d  chapters: %d%s' % (info['pages'], info['words'], len(info['chapters']), ('  mcq pages: %d' % info['mcq_pages']) if info.get('mcq_pages') else ''))
     if info['gaps']:
         print('page-number gaps (printed pages without text or footer):', info['gaps'])
     if info['skipped']:

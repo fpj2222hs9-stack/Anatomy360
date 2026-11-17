@@ -91,7 +91,7 @@ def make_retriever_factory(cfg, srcs, provs):
                 p = provs.get(fp.get('provider'))
                 r = retrieve.FileSearchRetriever(p, fp['store'], prompts) if p else None
             else:
-                r = retrieve.LocalRetriever(books.load_sources(srcs, sid, rc.get('max_block_words', 260)), rc)
+                r = retrieve.LocalRetriever(books.load_sources(srcs, sid, rc.get('max_block_words', 260)), rc, books.source_meta(srcs, sid))
         cache[sid] = r
         return r
     return get
@@ -201,7 +201,7 @@ def cmd_coverage(a):
         if not has_source(srcs, sid):
             print('%-13s مفيش مصدر' % sid); continue
         loaded = books.load_sources(srcs, sid, rc.get('max_block_words', 260))
-        r = retrieve.LocalRetriever(loaded, rc)
+        r = retrieve.LocalRetriever(loaded, rc, books.source_meta(srcs, sid))
         qs = [q for q in Q if q['sid'] == sid and not q['canc'] and q['stem'] and q['opts']]
         cnt = collections.Counter(); bysrc = collections.Counter(); chap = collections.Counter(); chap_ok = collections.Counter()
         for q in qs:

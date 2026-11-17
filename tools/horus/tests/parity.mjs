@@ -24,8 +24,9 @@ out=[]
 for q in qs:
     srcs=by.get(q['sid'])
     if not srcs: out.append(None); continue
-    ordered=sorted(srcs.items(), key=lambda kv: kv[1][0]['ord'])
-    ret=retrieve.LocalRetriever([(k,v) for k,v in ordered],{})
+    ordered=sorted(srcs.items(), key=lambda kv: (kv[1][0]['ord'], kv[0]))
+    meta={k:{'tier':v[0]['ord'],'boost':v[0].get('boost',1)} for k,v in ordered}
+    ret=retrieve.LocalRetriever([(k,v) for k,v in ordered],{},meta)
     hits=ret._run(retrieve.focused_query(q),6)
     out.append([[round(sc,4), idx.p[i]['id']] for sc,i,idx in hits])
 print(json.dumps(out))

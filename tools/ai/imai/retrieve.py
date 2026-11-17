@@ -148,20 +148,44 @@ def has_negation(stem):
 
 
 class LocalRetriever:
-    def __init__(self, source_passages, cfg):
-        """source_passages: [(source_id, [passages])] in the order the server wants (first source is tried first)."""
-        self.sources = [(sid, Index(ps)) for sid, ps in source_passages if ps]
+    def __init__(self, source_passages, cfg, meta=None):
+        """source_passages: [(source_id, [passages])] in the order the server wants.
+        meta (optional) = {source_id: {'tier': n, 'boost': x}}: sources with the SAME tier are searched together (same level, e.g. the department book and a doctor's handout),
+        and a source's scores are multiplied by its boost (>1 = wins when the match is close). Without meta every source is its own tier in list order, as before."""
+        meta = meta or {}
+        self.sources = []
+        for n, (sid, ps) in enumerate(source_passages):
+            if not ps:
+                continue
+            m = meta.get(sid) or {}
+            self.sources.append((sid, Index(ps), m.get('tier', n), float(m.get('boost', 1.0))))
         self.cfg = cfg
 
     def available(self):
         return bool(self.sources)
 
+    def _tiers(self):
+        t = {}
+        for s in self.sources:
+            t.setdefault(s[2], []).append(s)
+        return [t[k] for k in sorted(t)]
+
+    @staticmethod
+    def _merge(tier, getq, k):
+        """one tier -> its best k hits [(score*boost, index, Index)], all sources of the tier ranked together (ties: score, then source id, then position)"""
+        hits = []
+        for sid, idx, _t, boost in tier:
+            hits += [(sc * boost, i, idx, sid) for sc, i in idx.top(getq(idx), k)]
+        if len(tier) > 1:
+            hits.sort(key=lambda h: (-h[0], h[3], h[1]))
+        return [(sc, i, idx) for sc, i, idx, _ in hits[:k]]
+
     def _run(self, qterms, k):
-        # one connected source at a time, in order; the first source that reaches the score floor wins, otherwise the best of all
+        # one tier at a time, in order; the first tier that reaches the score floor wins, otherwise the best of all
         floor = self.cfg.get('min_top_score', 4.0)
         best = []
-        for sid, idx in self.sources:
-            hits = [(sc, i, idx) for sc, i in idx.top(qterms, k)]
+        for tier in self._tiers():
+            hits = self._merge(tier, lambda idx: qterms, k)
             if hits and hits[0][0] >= floor:
                 return hits
             if hits and (not best or hits[0][0] > best[0][0]):
@@ -173,12 +197,10 @@ class LocalRetriever:
         return self._pack(hits)
 
     def expanded(self, q):
-        qt = None
         hits = []
         floor = self.cfg.get('min_top_score', 4.0)
-        for sid, idx in self.sources:
-            qt = expanded_query(q, idx)
-            h = [(sc, i, idx) for sc, i in idx.top(qt, self.cfg.get('expanded_k', 10))]
+        for tier in self._tiers():
+            h = self._merge(tier, lambda idx: expanded_query(q, idx), self.cfg.get('expanded_k', 10))
             if h and (not hits or h[0][0] > hits[0][0]):
                 hits = h
             if h and h[0][0] >= floor:

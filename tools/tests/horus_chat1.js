@@ -10,6 +10,8 @@ const errs=[]; const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mj=async(p)=>(await fetch(MOCK+p)).json();
 async function mk(b,o){
   o=o||{}; const ctx=await b.newContext({viewport:{width:o.w||1100,height:o.h||900},colorScheme:o.dark?'dark':'light'});
+  /* the shipped js/ai-config.js has chat.pilot:false (Horus open to every signed-in student), so the pilot tests force pilot:true here; {realAi:true} uses the file as shipped */
+  if(!o.realAi) await ctx.route('**/js/ai-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM=window.IM||{};window.IM.AI={on:false,base:'ai/',chat:{on:true,pilot:true,path:'/functions/v1/horus'}};"}));
   await ctx.route('**/js/cloud-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM.CLOUD={on:true,pilot:false,required:false,url:'"+MOCK+"',anon:'sb_publishable_testkey',debounceMs:300,minGapMs:0,pollMs:600000};"}));
   await ctx.addInitScript(()=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-honor-ready':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',year:1})); }catch(e){} });
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
@@ -44,6 +46,13 @@ async function ask(p,text){ await p.fill('.hc-in',text); await p.click('.hc-send
     ok(!/horus=/.test(p.url()),'?horus=1 is cleaned from the URL');
     await open(p); ok(await fabShown(p),'pilot flag is remembered after reload');
     await open(p,'?horus=0'); await p.waitForTimeout(300); ok(!(await fabShown(p)),'?horus=0 switches it off again');
+    await ctx.close(); }
+
+  /* ===== 1b) الإعداد المشحون فعلًا (pilot:false): حورس ظاهر لكل الطلبة من غير ?horus=1 ===== */
+  { const {ctx,p}=await mk(b,{realAi:true}); await open(p);
+    ok(await p.evaluate(()=>IM.AI.chat.pilot)===false,'shipped config: chat.pilot is false');
+    ok(await p.evaluate(()=>IM.horusChat.on())===true,'shipped config: IM.horusChat.on() is true without ?horus=1');
+    ok(await fabShown(p),'shipped config: FAB is shown for a normal visitor');
     await ctx.close(); }
 
   /* ===== 2) من غير تسجيل دخول: البوابة ===== */
@@ -123,6 +132,10 @@ async function ask(p,text){ await p.fill('.hc-in',text); await p.click('.hc-send
   ok(!(await p.evaluate(()=>document.querySelector('.hc-in').disabled)),'next page load: limit is re-read from the server, composer enabled again');
   await mj('/__horus?mode=general'); await ask(p,'سؤال عام');
   ok(await p.evaluate(()=>!!document.querySelector('.hc-m.a:last-child .chip.doubt')&&!document.querySelector('.hc-m.a:last-child details.hc-src')&&/غير موجودة بشكل واضح/.test(document.querySelector('.hc-m.a:last-child').innerText)),'general answer: "معرفة طبية عامة" chip, disclosure sentence, no sources');
+  await mj('/__horus?mode=long'); await ask(p,'اشرح القائمة كلها');
+  { const r=await p.evaluate(()=>{ const m=document.querySelector('.hc-m.a:last-child'); const t=m.innerText; return {li:[...m.querySelectorAll('li')].filter(x=>/^العنصر \d+ من 80/.test(x.innerText.trim())).length,last:/LAST80/.test(t),first:/LAST1\b/.test(t),len:t.length}; });
+    ok(r.li===80&&r.last&&r.first,'long complete answer: all 80 list items rendered, first and last present ('+r.li+' items, '+r.len+' chars)');
+    await p.waitForTimeout(3800); const saved=await mj('/__chat'); ok(/LAST80/.test(JSON.stringify(saved)),'long complete answer: saved whole on the account (nothing cut)'); }
   await mj('/__horus?mode=ok');
 
   /* ===== 7) سؤال من شاشة السؤال (اسأل حورس) ===== */

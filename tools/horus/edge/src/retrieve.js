@@ -119,14 +119,25 @@ export function chatQuery(text, keywords, prevUser) {
   return d;
 }
 
-/* ---------- running a query over one subject's sources (the first source that reaches the floor wins, else the best) ---------- */
+/* ---------- running a query over one subject's sources ----------
+   Sources are grouped by level (ord): the first level that reaches the floor wins, else the best of all. Sources on the SAME level (the department book and a
+   doctor's handout, say) are searched together and ranked against each other; a source's scores are multiplied by its boost (idx.boost, default 1), so a source
+   with boost > 1 wins when its match is close to the other one's. Same rule as tools/ai/imai/retrieve.py (LocalRetriever). */
 export function runSources(sources, qterms, k, floor, syn) {
+  const groups = new Map();
+  sources.forEach((s, n) => { const t = s[1].ord == null ? n : s[1].ord; if (!groups.has(t)) groups.set(t, []); groups.get(t).push(s); });
   let best = [];
-  for (const [, idx] of sources) {
-    const terms = syn ? expandTerms(new Map(qterms), idx, syn) : qterms;
-    const hits = idx.top(terms, k).map(([sc, i]) => [sc, i, idx]);
-    if (hits.length && hits[0][0] >= floor) return hits;
-    if (hits.length && (!best.length || hits[0][0] > best[0][0])) best = hits;
+  for (const t of [...groups.keys()].sort((a, b) => a - b)) {
+    const g = groups.get(t), hits = [];
+    for (const [src, idx] of g) {
+      const terms = syn ? expandTerms(new Map(qterms), idx, syn) : qterms;
+      const b = idx.boost || 1;
+      for (const [sc, i] of idx.top(terms, k)) hits.push([sc * b, i, idx, src]);
+    }
+    if (g.length > 1) hits.sort((a, b) => (b[0] - a[0]) || (a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0) || (a[1] - b[1]));
+    const top = hits.slice(0, k).map(h => [h[0], h[1], h[2]]);
+    if (top.length && top[0][0] >= floor) return top;
+    if (top.length && (!best.length || top[0][0] > best[0][0])) best = top;
   }
   return best;
 }
@@ -135,7 +146,7 @@ export function runSources(sources, qterms, k, floor, syn) {
 /* ---------- free questions: a score that means the same thing in every book ----------
    Raw BM25 depends on the size of each book (a small book gives big IDF), so across subjects it cannot be compared or thresholded.
    ratio = what the passage scores / the most any passage could score for this query in this book (terms the book never mentions count as
-   maximal-IDF misses). 1 = the passage has every query term. Hits come back as [ratio, indexInBook, Index, rawScore]. */
+   maximal-IDF misses). 1 = the passage has every query term (times the source's boost). Hits come back as [ratio, indexInBook, Index, rawScore]. */
 export function chatHits(sources, base, k, syn) {
   const out = [];
   const maxOf = (terms, idx) => { let m = 0; for (const [t, w] of terms) m += w * (idx.df.has(t) ? idx.idf(t) : Math.log(1 + (idx.N + 0.5) / 0.5)) * (idx.k1 + 1); return m; };
@@ -145,7 +156,8 @@ export function chatHits(sources, base, k, syn) {
     const exp = expandTerms(new Map(base), idx, syn), me = maxOf(exp, idx);
     const sc = idx.scoreAll(exp), sb = idx.scoreAll(base);
     const order = sc.map((_, i) => i).filter(i => sc[i] > 0).sort((a, b) => (sc[b] - sc[a]) || (a - b)).slice(0, k);
-    for (const i of order) out.push([Math.max(sb[i] / mb, sc[i] / me), i, idx, sc[i]]);
+    const bo = idx.boost || 1;                                 // a source's priority: > 1 wins when the match is close to another source's
+    for (const i of order) out.push([Math.max(sb[i] / mb, sc[i] / me) * bo, i, idx, sc[i]]);
   }
   return out.sort((a, b) => b[0] - a[0]);
 }
@@ -174,7 +186,7 @@ export function pack(hits) {
   return blocks;
 }
 
-/* passages rows from the database -> {sid: [[src, Index], ...]} in source-priority order */
+/* passages rows from the database -> {sid: [[src, Index], ...]}; each Index carries .ord (its level) and .boost; sorted by level, then source id (stable) */
 export function buildSources(rows) {
   const bySid = new Map();
   for (const r of rows) {
@@ -182,13 +194,13 @@ export function buildSources(rows) {
     const ps = { id: r.id, sid: r.sid, src: r.src, ord: r.ord, seq: r.seq, book: r.book, chapter: r.chapter || '', heading: r.heading || '', page: r.page || '', body: r.body, text: (head + '\n' + r.body).trim() };
     if (!bySid.has(r.sid)) bySid.set(r.sid, new Map());
     const m = bySid.get(r.sid);
-    if (!m.has(r.src)) m.set(r.src, { ord: r.ord, list: [] });
+    if (!m.has(r.src)) m.set(r.src, { ord: r.ord, boost: Number(r.boost) > 0 ? Number(r.boost) : 1, list: [] });
     m.get(r.src).list.push(ps);
   }
   const out = {};
   for (const [sid, m] of bySid) {
-    out[sid] = [...m.entries()].sort((a, b) => a[1].ord - b[1].ord)
-      .map(([src, v]) => [src, new Index(v.list.sort((a, b) => (a.seq - b.seq) || (a.id - b.id)))]);
+    out[sid] = [...m.entries()].sort((a, b) => (a[1].ord - b[1].ord) || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      .map(([src, v]) => { const ix = new Index(v.list.sort((a, b) => (a.seq - b.seq) || (a.id - b.id))); ix.ord = v.ord; ix.boost = v.boost; return [src, ix]; });
   }
   return out;
 }

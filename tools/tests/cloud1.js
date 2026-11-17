@@ -7,7 +7,8 @@ const errs=[]; const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mj=async(p)=>(await fetch(MOCK+p)).json();
 async function mk(b,o){
   o=o||{}; const ctx=await b.newContext({viewport:{width:o.w||1100,height:900}});
-  if(!o.off) await ctx.route('**/js/cloud-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM.CLOUD={on:true,url:'"+MOCK+"',anon:'sb_publishable_testkey',debounceMs:300,minGapMs:0,pollMs:1500};"}));
+  /* the shipped js/cloud-config.js is now on:true (live since the owner switched it on), so the "off" case forces on:false here */
+  await ctx.route('**/js/cloud-config.js',r=>r.fulfill({contentType:'application/javascript',body:o.off?"window.IM.CLOUD={on:false,pilot:false,required:false,url:'',anon:''};":"window.IM.CLOUD={on:true,url:'"+MOCK+"',anon:'sb_publishable_testkey',debounceMs:300,minGapMs:0,pollMs:1500};"}));
   await ctx.addInitScript((a)=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1})); if(a.user&&!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:a.user,v:1,created:Date.now()-864e5*30})); }catch(e){} },{user:o.noUser?null:(o.user||'محمد سيف')});
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message)); p.__net=[]; p.on('request',r=>{ if(r.url().startsWith(MOCK)) p.__net.push(r.method()+' '+r.url().replace(MOCK,'').slice(0,60)); });
   return {ctx,p};
@@ -32,8 +33,8 @@ async function signInVia(p){                    /* من كارت الإعداد�
 
   /* ===== 1) مقفول افتراضيًا: مفيش طلبات ومفيش كارت ===== */
   { const {ctx,p}=await mk(b,{off:true}); await open(p); await p.evaluate(()=>IM.settingsDialog()); await p.waitForTimeout(400);
-    ok(p.__net.length===0&&!(await p.$('.cl-card')),'cloud off by default: no requests and no card in settings');
-    ok(!(await p.evaluate(()=>IM.cloudOn())),'IM.cloudOn() is false with the shipped config'); await ctx.close(); }
+    ok(p.__net.length===0&&!(await p.$('.cl-card')),'cloud on:false: no requests and no card in settings');
+    ok(!(await p.evaluate(()=>IM.cloudOn())),'IM.cloudOn() is false when the config says on:false'); await ctx.close(); }
 
   /* ===== 2) طالب عنده تقدّم يربط لأول مرة ===== */
   await mj('/__reset'); await mj('/__next?email=student@example.com&name=Student%20One');

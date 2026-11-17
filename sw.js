@@ -1,6 +1,6 @@
 /* Imhotep · إمحتب — offline layer. Cache-first for the app and the question files, so the site works without internet after the first visit.
    Bump VERSION when you replace any file so devices fetch the new ones. */
-var VERSION='imhotep-v22';
+var VERSION='imhotep-v24';
 var CORE=['./','index.html','manifest.webmanifest',
   'css/design.css','css/app.css','css/screens.css','css/book.css','css/print.css','css/tour.css','css/pages.css','css/cartouche.css','css/horus-chat.css',
   'js/core.js','js/fixes.js','js/bank.js','js/state.js','js/ui.js','js/home.js','js/workshop.js','js/session.js','js/result.js','js/report.js','js/papyrus.js','js/scales.js','js/library.js','js/printing.js','js/mixed.js','js/about.js','js/notify.js','js/level.js','js/weekly.js','js/cartouche.js','js/cartouche-page.js','js/board-config.js','js/board.js','js/cloud-config.js','js/cloud.js','js/ai-config.js','js/horus.js','js/ai.js','js/horus-chat.js','js/tour.js','js/app.js',

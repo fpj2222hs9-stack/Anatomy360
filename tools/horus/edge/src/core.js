@@ -14,7 +14,7 @@ const SUBJ = { anatomy: 'Anatomy and Embryology', histology: 'Histology', physio
 const SYN = makeSynonyms(SYNONYM_GROUPS);
 const MCQ_FLOOR = 4.0;      // same floor as the offline pipeline (tools/ai/config.json retrieval.min_top_score)
 const CHAT_MIN = 0.3;       // free questions: minimum relevance ratio (0..1, see retrieve.chatHits) for a passage to be offered as evidence
-const MAX_EVIDENCE_CHARS = 9000;
+const MAX_EVIDENCE_CHARS = 16000;    // room for ~7 blocks: the answer must be able to cover everything the books say about the topic
 const ORIGINS = ['https://fpj2222hs9-stack.github.io', 'https://imhotep-lac.vercel.app', 'https://imhotep-dr-legacy.vercel.app'];
 
 export class HErr extends Error {
@@ -73,7 +73,7 @@ export function makeHandler(env, io) {
   const LIM_U = () => N('HORUS_USER_DAILY', 10);
   const LIM_G = () => N('HORUS_GLOBAL_DAILY', 400);
   const RPM = () => N('HORUS_USER_RPM', 8);
-  const TTL = 6 * 3600 * 1000;
+  const TTL = 15 * 60 * 1000;      // books are re-read every 15 minutes, so a newly imported book shows up without redeploying
 
   const keyOf = (plural, legacy) => {
     const raw = env(plural);
@@ -102,10 +102,10 @@ export function makeHandler(env, io) {
     return JSON.parse(t);
   }
 
-  /* ---------- the books, loaded once per subject and kept for 6 hours in this isolate ---------- */
+  /* ---------- the books, loaded once per subject and kept for 15 minutes in this isolate (TTL) ---------- */
   const books = new Map();
   async function loadSid(sid) {
-    const rows = await rest('horus_passages?select=id,sid,src,ord,seq,book,chapter,heading,page,body&sid=eq.' + sid + '&order=ord.asc,seq.asc&limit=2000');
+    const rows = await rest('horus_passages?select=id,sid,src,ord,seq,book,chapter,heading,page,body,boost&sid=eq.' + sid + '&order=ord.asc,seq.asc&limit=2000');
     return buildSources(rows)[sid] || [];
   }
   async function corpus(sids) {
@@ -151,14 +151,14 @@ export function makeHandler(env, io) {
     const g = await rpc('horus_take', { p_scope: 'g', p_day: dayIn('America/Los_Angeles', now()), p_limit: LIM_G() });
     if (g < 0) throw new HErr('busy', 503, 'global daily limit reached');
     const models = String(E('HORUS_MODELS', 'gemini-3.5-flash-lite,gemini-3.1-flash-lite')).split(',').map(s => s.trim()).filter(Boolean);
-    const gc = { temperature: o.temperature == null ? 0.3 : o.temperature, maxOutputTokens: o.maxOut || 1400, responseMimeType: 'application/json' };
+    const gc = { temperature: o.temperature == null ? 0.3 : o.temperature, maxOutputTokens: o.maxOut || 4096, responseMimeType: 'application/json' };
     const th = E('HORUS_THINKING', ''); if (th) { try { gc.thinkingConfig = JSON.parse(th); } catch (e) { /* ignore */ } }
     const body = JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: gc });
     let last = { status: 0, body: '' };
     for (const model of models) {
       for (let attempt = 0; attempt < 2; attempt++) {
         let res;
-        const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 25000);
+        const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 40000);
         try {
           res = await doFetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',
             { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body, signal: ac.signal });
@@ -196,7 +196,7 @@ export function makeHandler(env, io) {
 
   function judge(obj, blocks, q) {
     if (!obj) return { retry: 'not_json' };
-    const answer = String(obj.answer || '').trim().slice(0, 3500);
+    const answer = String(obj.answer || '').trim().slice(0, 6000);
     if (!answer) return { retry: 'empty' };
     const topic = obj.topic === 'other' ? 'other' : 'medical';
     if (topic === 'medical' && arabicRatio(answer) < 0.25) return { retry: 'not_arabic' };
@@ -248,10 +248,10 @@ export function makeHandler(env, io) {
         const prev = [...p.hist].reverse().find(x => x.r === 'u');
         const qt = chatQuery(p.text, kw, prev && prev.t);
         let hits = [];
-        for (const sid of sids) for (const h of chatHits(S[sid] || [], qt, 5, SYN)) hits.push(h);
+        for (const sid of sids) for (const h of chatHits(S[sid] || [], qt, 7, SYN)) hits.push(h);
         hits.sort((a, b) => b[0] - a[0]);
         const top = hits.length ? hits[0][0] : 0;
-        hits = top >= CHAT_MIN ? hits.filter(h => h[0] >= Math.max(CHAT_MIN, top * 0.5)).slice(0, 5) : [];
+        hits = top >= CHAT_MIN ? hits.filter(h => h[0] >= Math.max(CHAT_MIN, top * 0.45)).slice(0, 7) : [];
         hits = hits.map(h => [h[3], h[1], h[2]]);          // pack() wants [rawScore, index, Index]
         blocks = pack(hits);
       }
@@ -269,11 +269,11 @@ export function makeHandler(env, io) {
     for (const h of p.hist) contents.push({ role: h.r === 'u' ? 'user' : 'model', parts: [{ text: h.t }] });
     contents.push({ role: 'user', parts: [{ text: user }] });
     const system = p.q ? Q_SYSTEM : CHAT_SYSTEM;
-    let r = await gemini(system, contents, { maxOut: p.q ? 1800 : 1400 });
+    let r = await gemini(system, contents, { maxOut: p.q ? 3000 : 4096 });
     let v = judge(parseJson(r.text), blocks, p.q);
     if (v.retry) {
       contents.push({ role: 'model', parts: [{ text: r.text }] }, { role: 'user', parts: [{ text: RETRY_AR }] });
-      r = await gemini(system, contents, { maxOut: p.q ? 1800 : 1400 });
+      r = await gemini(system, contents, { maxOut: p.q ? 3000 : 4096 });
       v = judge(parseJson(r.text), blocks, p.q);
       if (v.retry) throw new HErr('ai', 502, 'the model gave an unusable answer (' + v.retry + ')');
     }

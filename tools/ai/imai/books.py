@@ -24,11 +24,33 @@ def _windows(words, size, overlap=40):
     return out
 
 
-def _mk(pid, sid, book, chapter, heading, page, body, size):
+def _windows_lines(text, size, overlap=40):
+    """same as _windows but cuts only between lines (keeps the line breaks): for handouts whose tables are laid out line by line."""
+    out, cur, n = [], [], 0
+    for ln in text.split('\n'):
+        w = len(ln.split())
+        if cur and n + w > size:
+            out.append('\n'.join(cur).strip())
+            keep, c = [], 0
+            for l in reversed(cur):
+                lw = len(l.split())
+                if c + lw > overlap:
+                    break
+                keep.insert(0, l); c += lw
+            cur, n = keep, c
+        cur.append(ln); n += w
+    last = '\n'.join(cur).strip()
+    if last and (not out or last != out[-1]):
+        out.append(last)
+    return out or ['']
+
+
+def _mk(pid, sid, book, chapter, heading, page, body, size, keep_lines=False):
     """one section -> passages; the heading is repeated as the first line of every window so the printed heading is always inside the block."""
     res = []
     words = body.split()
-    for k, w in enumerate(_windows(words, size) if words else ['']):
+    wins = (_windows_lines(body, size) if keep_lines else _windows(words, size)) if words else ['']
+    for k, w in enumerate(wins):
         head = heading or 'Relevant section'
         res.append({'id': '%s#%d' % (pid, k), 'sid': sid, 'book': book, 'chapter': chapter, 'heading': heading or '',
                     'page': page, 'body': w, 'text': (head + '\n' + w).strip()})
@@ -58,7 +80,7 @@ def from_text_file(sid, src, path, size):
         nonlocal buf, n
         body = '\n'.join(buf).strip()
         if body:
-            out.extend(_mk('%s:%s:%d' % (src['id'], os.path.basename(path), n), sid, title, chapter, heading, page, body, size))
+            out.extend(_mk('%s:%s:%d' % (src['id'], os.path.basename(path), n), sid, title, chapter, heading, page, body, size, bool(src.get('keep_lines'))))
             n += 1
         buf = []
     for ln in lines:
@@ -125,3 +147,15 @@ def source_ready(src, sid):
             return os.path.isfile(os.path.join(base, src['file']))
         return os.path.isdir(base) and any(f.lower().endswith(exts) for f in os.listdir(base))
     return False
+
+
+def source_meta(sources_cfg, sid):
+    """{source_id: {'tier': n, 'boost': x}} for the sources that are really here. tier = the source's order among the ready sources unless sources.json pins it
+    ("tier": 0 puts a source on the same level as another one); boost (default 1) makes a source win when its match is close to another source's."""
+    meta, n = {}, 0
+    for src in sources_cfg.get(sid) or []:
+        if not source_ready(src, sid):
+            continue
+        meta[src['id']] = {'tier': int(src.get('tier', n)), 'boost': float(src.get('boost', 1.0))}
+        n += 1
+    return meta
