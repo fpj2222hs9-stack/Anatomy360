@@ -1,0 +1,26 @@
+{
+ "exported": "2026-11-13T04:11:02.500Z",
+ "questions": 3246,
+ "books": {
+  "anatomy": {
+   "chapters": 8,
+   "sections": 78
+  },
+  "histology": {
+   "chapters": 0,
+   "sections": 0
+  },
+  "biochemistry": {
+   "chapters": 14,
+   "sections": 389
+  },
+  "physiology": {
+   "chapters": 0,
+   "sections": 0
+  }
+ },
+ "sha": {
+  "questions": "e0308038cede70ae",
+  "books": "56fd80c716dc73f0"
+ }
+}

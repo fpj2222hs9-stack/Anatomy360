@@ -1,0 +1,21 @@
+Curriculum scope:
+Year: {year}
+Module: {module}
+Subject: {subject}
+Chapter: {chapter}
+
+Question:
+{question}
+
+Options:
+A. {option_a}
+B. {option_b}
+C. {option_c}
+D. {option_d}
+E. {option_e}
+
+Matching pairs (إن وجدت):
+1. {left} => {right}
+
+Stored answer key:
+{correct_answer}

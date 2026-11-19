@@ -1,0 +1,53 @@
+{
+  "_help": "ترتيب المصادر لكل مادة (السيرفر هو اللي بيتحكم في الترتيب، زي البرومبتات). كل مصدر: kind = site-book (نص الكتاب الموجود جوه الموقع) أو text (ملف نصي/ماركداون في tools/ai/books/) أو passages (JSON جاهز). اختياري لكل مصدر: tier = مستوى المصدر (مصدرين بنفس الـ tier بيتبحث فيهم مع بعض بنفس المستوى)، boost = أفضلية (1.15 = بيكسب لما التطابق قريب)، keep_lines = قصّ المقاطع بين السطور (للملازم اللي فيها جداول).",
+  "anatomy": [
+    {
+      "id": "anatomy-dept-book",
+      "kind": "text",
+      "title": "ISK 101 · Anatomy and Embryology (department book)",
+      "dir": "anatomy",
+      "caps": false
+    },
+    {
+      "id": "anatomy-galal-handout",
+      "kind": "text",
+      "title": "Module 101 · Upper Limb Anatomy (Dr. Ahmed Galal's handout)",
+      "dir": "anatomy_galal",
+      "caps": false,
+      "tier": 0,
+      "boost": 1.15,
+      "keep_lines": true
+    },
+    {
+      "id": "anatomy-site-book",
+      "kind": "site-book",
+      "title": "Anatomy book (Imhotep library)",
+      "tier": 1
+    }
+  ],
+  "biochemistry": [
+    {
+      "id": "biochem-site-book",
+      "kind": "site-book",
+      "title": "Biochemistry book (Imhotep library)"
+    }
+  ],
+  "histology": [
+    {
+      "id": "histology-dept-book",
+      "kind": "text",
+      "title": "ISK 101 · Histology (department book)",
+      "dir": "histology",
+      "caps": false
+    }
+  ],
+  "physiology": [
+    {
+      "id": "physiology-dept-book",
+      "kind": "text",
+      "title": "INT 102 · Physiology (department book)",
+      "dir": "physiology",
+      "caps": false
+    }
+  ]
+}

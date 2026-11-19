@@ -1,0 +1,6 @@
+# كتب القسم: حقوقها للكلية، مش بتترفع على الريبو العام. شوف tools/ai/books/README.md
+tools/ai/books/*/
+__pycache__/
+*.pyc
+# نصوص كتب الأقسام المجهّزة لحورس (CSV/SQL/JSON): خاصة، بتتستورد في Supabase بس. شوف tools/horus/README.md
+tools/horus/out/
