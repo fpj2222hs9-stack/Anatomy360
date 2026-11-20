@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 var IM=window.IM, h=IM.h;
-IM.MAINTENANCE=true;     /* flip to true to close the site behind a notice */
+IM.MAINTENANCE=false;     /* flip to true to close the site behind a notice */
 var current=null;
 
 IM.route=function(){

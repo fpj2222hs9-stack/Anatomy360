@@ -1,0 +1,9 @@
+{
+  "name": "imhotep-firebase-tools",
+  "private": true,
+  "type": "module",
+  "description": "Runs the migration, the daily backup and the selftest (tools/firebase). Firebase Spark plan: no Cloud Functions are used.",
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

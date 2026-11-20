@@ -15,7 +15,7 @@ const geminiCount = be => be.st.geminiBodies.length;
 console.log('handler');
 await t('health check needs no sign-in and leaks no secret', async () => {
   const { h } = setup(); const r = await h(req('GET', null, { token: null })); const b = await j(r);
-  assert.equal(r.status, 200); assert.deepEqual(b.ready, { gemini: true, db: true }); assert(!JSON.stringify(b).includes('AIza'));
+  assert.equal(r.status, 200); assert.deepEqual(b.ready, { gemini: true, db: true, fb: false });   // fb = FIREBASE_PROJECT_ID is set (a boolean, never the value) assert(!JSON.stringify(b).includes('AIza'));
 });
 await t('CORS: allowed origin echoed, unknown origin gets no allow header', async () => {
   const { h } = setup();

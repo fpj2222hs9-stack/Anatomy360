@@ -1,0 +1,8 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "progress",         "fieldPath": "data", "indexes": [] },
+    { "collectionGroup": "progress_backups", "fieldPath": "data", "indexes": [] },
+    { "collectionGroup": "horus_chat",       "fieldPath": "msgs", "indexes": [] }
+  ]
+}

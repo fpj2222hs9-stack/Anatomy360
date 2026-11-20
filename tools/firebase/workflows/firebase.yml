@@ -1,0 +1,143 @@
+# Imhotep · إمحتب — Firebase (خطة Spark، من غير Cloud Functions)
+# حطّ الملف ده يدويًا في  .github/workflows/firebase.yml  (الـ workflow بتاع الـ unzip مابيقدرش يكتب في المجلد ده).
+# بعدها: تبويب Actions ← "Firebase" ← Run workflow ← اختار الـ action.
+#
+# الـ Secrets (Settings ← Secrets and variables ← Actions ← Secrets). مفيش ولا قيمة منهم بتتكتب في ملف ولا في الشات:
+#   FIREBASE_SERVICE_ACCOUNT  ← محتوى ملف الـ JSON كله (Firebase console ← Project settings ← Service accounts ← Generate new private key)
+#   SUPABASE_URL              ← https://<project>.supabase.co                       (للنقل بس)
+#   SUPABASE_SECRET_KEY       ← sb_secret_…  (أو service_role القديم)               (للنقل بس)
+# المتغيّر (Variables):
+#   FIREBASE_BACKUP = on      ← بيشغّل النسخ الاحتياطي اليومي لوحده (ماتفعّلوش قبل التحويل لـ Firebase، وقتها مفيش حاجة تتنسخ)
+#
+# اللوج بيطبع أرقام وأكواد بس (الريبو عام): مفيش إيميلات ولا uid ولا إجابات. ماترفعش ناتج أي خطوة كـ artifact.
+
+name: Firebase
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'الإجراء'
+        type: choice
+        required: true
+        default: unit-tests
+        options:
+          - unit-tests          # اختبارات الكود (من غير أسرار ولا إنترنت)
+          - rules-test          # قواعد Firestore على المحاكي الرسمي
+          - deploy              # نشر قواعد Firestore والفهارس (مشروع الـ service account)
+          - selftest            # فحص شامل على المشروع الحقيقي بمستخدم تجريبي (بيتمسح)
+          - migrate-dry-run     # النقل من Supabase: قراءة وتقرير من غير كتابة
+          - migrate-apply       # النقل الفعلي (اكتب APPLY في confirm)
+          - migrate-verify      # مقارنة للقراءة بس: كل إجابة على Supabase موجودة على Firebase؟
+          - backup              # النسخ الاحتياطي (بيشتغل لوحده كل يوم لو FIREBASE_BACKUP=on)
+      confirm:
+        description: 'migrate-apply بس: اكتب APPLY'
+        type: string
+        required: false
+        default: ''
+      ask:
+        description: 'selftest: اسأل حورس سؤال حقيقي (بيصرف طلب Gemini واحد)'
+        type: boolean
+        required: false
+        default: false
+  schedule:
+    - cron: '30 8 * * *'      # كل يوم 8:30 UTC (10:30 صباحًا بتوقيت القاهرة الشتوي). GitHub بيوقف المجدولة لو الريبو ماحصلهوش أي نشاط 60 يوم.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-ops
+  cancel-in-progress: false
+
+env:
+  ACTION: ${{ github.event_name == 'schedule' && 'backup' || inputs.action }}
+
+jobs:
+  run:
+    if: github.event_name != 'schedule' || vars.FIREBASE_BACKUP == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # ---------- unit-tests ----------
+      - name: unit tests
+        if: env.ACTION == 'unit-tests'
+        run: |
+          set -e
+          node tools/firebase/tests/backup.test.mjs
+          node tools/firebase/tests/migrate.test.mjs
+          node tools/horus/tests/firebase.test.mjs
+          node tools/horus/tests/handler.test.mjs
+          node tools/horus/tests/priority.test.mjs
+
+      # ---------- rules-test ----------
+      - uses: actions/setup-java@v4
+        if: env.ACTION == 'rules-test'
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: rules test (Firestore emulator)
+        if: env.ACTION == 'rules-test'
+        working-directory: tools/firebase
+        run: |
+          set -e
+          npm install --no-audit --no-fund --prefix tests/rules
+          npx -y firebase-tools@14 emulators:exec --only firestore --project demo-imhotep "node tests/rules/rules.test.mjs"
+
+      # ---------- deploy ----------
+      - name: deploy Firestore rules and indexes
+        if: env.ACTION == 'deploy'
+        working-directory: tools/firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -e +x
+          umask 077
+          [ -n "$FIREBASE_SERVICE_ACCOUNT" ] || { echo "FIREBASE_SERVICE_ACCOUNT secret is empty"; exit 2; }
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          PROJECT=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,'utf8')).project_id)")
+          echo "Deploying Firestore rules + indexes to project: $PROJECT"
+          npx -y firebase-tools@14 deploy --only firestore --project "$PROJECT" --non-interactive
+
+      # ---------- selftest / migrate / backup (محتاجين firebase-admin) ----------
+      - name: install firebase-admin
+        if: env.ACTION == 'selftest' || env.ACTION == 'backup' || startsWith(env.ACTION, 'migrate-')
+        working-directory: tools/firebase
+        run: npm install --no-audit --no-fund
+
+      - name: selftest
+        if: env.ACTION == 'selftest'
+        working-directory: tools/firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SELFTEST_ASK: ${{ inputs.ask && '1' || '' }}
+        run: node selftest.mjs
+
+      - name: migrate (Supabase to Firebase)
+        if: startsWith(env.ACTION, 'migrate-')
+        working-directory: tools/firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -e
+          if [ "$ACTION" = "migrate-apply" ] && [ "$CONFIRM" != "APPLY" ]; then
+            echo "migrate-apply writes to Firebase: type APPLY in the 'confirm' box and run again."; exit 2
+          fi
+          node migrate/migrate.mjs --mode="${ACTION#migrate-}"
+
+      - name: daily backup
+        if: env.ACTION == 'backup'
+        working-directory: tools/firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node backup/backup.mjs

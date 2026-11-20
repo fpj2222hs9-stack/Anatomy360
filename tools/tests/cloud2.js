@@ -106,7 +106,9 @@ async function clickWall(p){ await Promise.all([p.waitForNavigation({url:/code=|
   await A.p.screenshot({path:OUT+'cloud-card-del.png'});
   await A.p.click('.cl-del'); ok(await A.p.evaluate(()=>document.querySelector('.cl-del').classList.contains('armed')),'first click only arms it (needs a second click)');
   const rowsBefore=Object.keys(await mj('/__rows')).length;
-  await A.p.click('.cl-del'); await A.p.waitForTimeout(1500);
+  /* the card is rebuilt on every sync event (every 1.5 s here), which drops the "armed" state, so confirm inside ONE page task (nothing can re-render in between) */
+  await A.p.evaluate(()=>{ const b=document.querySelector('.cl-del'); if(!b.classList.contains('armed')) b.click(); b.click(); });
+  await A.p.waitForFunction(()=>!document.querySelector('.cl-del'),null,{timeout:8000}).catch(()=>{}); await A.p.waitForTimeout(500);
   ok(Object.keys(await mj('/__rows')).length===rowsBefore-1,'second click deleted the account row on the server');
   const sd=await cs(A.p); ok(!sd.signedIn&&!sd.acct,'the device is signed out and unlinked');
   ok((await nAns(A.p))===n43,'local progress is untouched after deleting the server copy');

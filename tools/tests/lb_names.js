@@ -17,7 +17,7 @@ async function mk(b,name,w){
   // A يشترك باسم
   const A=await mk(b,'محمد سيف');
   const ra=await A.p.evaluate(()=>IM.boardJoin('محمد سيف').then(r=>({ok:1,serial:r.serial}),e=>({ok:0,e:String(e.message)})));
-  ok(ra.ok&&/^IMH-/.test(ra.serial),'A joins as «محمد سيف» ('+ra.serial+')');
+  ok(ra.ok&&/^IMH-/.test(ra.serial),'A joins as «محمد سيف» ('+(ra.serial||ra.e)+')');
 
   // B: صفحة اللوحة، يكتب نفس الاسم بتشكيل ومسافات زيادة
   const B=await mk(b,'مُحَمَّد  سيف');

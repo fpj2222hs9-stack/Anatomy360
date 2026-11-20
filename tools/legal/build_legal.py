@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """Generates privacy.html and terms.html (static, bilingual AR/EN) into the site root.
-usage: python3 build_legal.py <site-dir>"""
+usage: python3 build_legal.py <site-dir> [supabase|firebase] [YYYY-MM-DD]
+  supabase (default): the texts that are live today (Supabase stores progress + sign-in).
+  firebase          : for the day the site switches to Firebase (Spark plan): progress, sign-in and the Horus chat history are on Firebase (Google),
+                      Supabase only runs Horus (function, daily counter, shared answer cache) and keeps the OLD copy for a short while.
+                      Only the privacy policy changes (the terms never mention the provider, so terms.html stays byte-identical). The "last updated" date
+                      of the privacy page is the 3rd argument (default: today). Region of Firestore: edit FB_REGION_* below if you did not pick Frankfurt."""
 import sys, os, html
 SITE = 'https://imhotep-lac.vercel.app'
 UPDATED_AR = '١٤ نوفمبر ٢٠٢٦'
@@ -239,6 +244,57 @@ TERMS_EN = """
 """
 
 out = sys.argv[1] if len(sys.argv) > 1 else '.'
+MODE = sys.argv[2] if len(sys.argv) > 2 else 'supabase'
+if MODE not in ('supabase', 'firebase'):
+    sys.exit('mode must be supabase or firebase')
+
+FB_REGION_AR, FB_REGION_EN = 'فرانكفورت بالاتحاد الأوروبي', 'Frankfurt, EU'          # لازم تطابق المنطقة اللي اتختارت لـ Firestore في Firebase console (مش بتتغيّر بعد الإنشاء)
+
+def swap(txt, start, end, new):
+    """replaces txt[start … end] (both markers must be found once)"""
+    assert txt.count(start) == 1, start[:40]
+    a = txt.index(start); b = txt.index(end, a) + len(end)
+    return txt[:a] + new + txt[b:]
+
+def rep(txt, old, new):
+    assert txt.count(old) == 1, old[:40]
+    return txt.replace(old, new)
+
+if MODE == 'firebase':
+    import datetime
+    d = datetime.date.fromisoformat(sys.argv[3]) if len(sys.argv) > 3 else datetime.date.today()
+    AR_M = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+    EN_M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    FB_UPDATED_AR = (str(d.day) + ' ' + AR_M[d.month - 1] + ' ' + str(d.year)).translate(str.maketrans('0123456789', '٠١٢٣٤٥٦٧٨٩'))
+    FB_UPDATED_EN = EN_M[d.month - 1] + ' ' + str(d.day) + ', ' + str(d.year)
+
+    # ---- العربي ----
+    PRIV_AR_FB = swap(PRIV_AR, '<li><b>Supabase</b> (قاعدة البيانات وتسجيل الدخول)', '(من غير ربط بحسابك).</li>',
+        '<li><b>Firebase (من Google)</b> (قاعدة البيانات Firestore وتسجيل الدخول): بنخزّن هنا تقدّمك وبيانات حساب جوجل الأساسية (الاسم والإيميل ورابط الصورة). الخوادم في ' + FB_REGION_AR + '. تقدّم كل طالب في سجل واحد خاص بيه، وقواعد الأمان بتمنع أي حساب إنه يقرأ أو يكتب سجل حساب تاني. ولو حورس متاح بنخزّن هنا كمان محادثتك مع حورس (سجل خاص بيك بنفس الحماية).</li>\n'
+        '<li><b>Supabase</b> (فرانكفورت بالاتحاد الأوروبي): كنا بنستخدمه قبل كده لحفظ التقدّم وتسجيل الدخول، وبعد ما نقلنا بياناتك لـ Firebase بنحتفظ بنسخة قديمة منها لفترة قصيرة (حوالي شهر) عشان نقدر نرجع لها لو حصلت مشكلة، وبعدها بتتمسح. وبنستخدمه لسه لتشغيل مساعد حورس: الدالة اللي بتكلّم Gemini، وعدّاد أسئلتك اليومي (بيتمسح تلقائيًا بعد حوالي أسبوع)، والذاكرة المشتركة للإجابات (من غير ربط بحسابك). مش بنخزّن عليه تقدّمك الجديد.</li>')
+    PRIV_AR_FB = rep(PRIV_AR_FB, '<li><b>Vercel وGitHub</b>: استضافة ملفات الموقع فقط. مش بيخزّنوا تقدّمك.</li>',
+        '<li><b>Vercel وGitHub</b>: استضافة ملفات الموقع. وGitHub بيشغّل كمان مهمة النسخ الاحتياطي اليومية (بصلاحية مدير المشروع). النسخ نفسها بتتخزّن على Firebase، مش على GitHub، ومحدّش منهم بيخزّن تقدّمك.</li>')
+    PRIV_AR_FB = swap(PRIV_AR_FB, '<li>بنحتفظ في قاعدة البيانات بعدد صغير من النسخ الاحتياطية', 'بتتمسح مع حسابك.</li>',
+        '<li>بنحتفظ في قاعدة البيانات بعدد صغير من النسخ الاحتياطية التلقائية لتقدّمك (٣ نسخ يومية بالتناوب، يعني آخر ٣ أيام تقريبًا، ولو حصل نقص كبير مفاجئ في الإجابات بنحتفظ بالنسخ الأقدم فترة)، عشان لو جهاز بيانات اتمسحت غلط ما يضيعش تقدّمك. بتتمسح مع حسابك.</li>')
+    PRIV_AR_FB = rep(PRIV_AR_FB, 'الحذف بيشيل بياناتك من السيرفر بس (ومعاها محادثة حورس وعدّاد أسئلتك اليومي)',
+        'الحذف بيشيل بياناتك من Firebase (تقدّمك ونسخه الاحتياطية ومحادثة حورس وحساب الدخول نفسه)، وعدّاد أسئلتك اليومي على Supabase بيتمسح تلقائيًا بعد حوالي أسبوع، ولو كان لك بيانات قديمة على Supabase من قبل النقل فبتتمسح هي كمان مع باقي البيانات القديمة (وبياناتك اللي مسحتها قبل كده مش بتترجّع). الحذف بيتم من جهازك ولازم تكون مسجّل دخولك بجوجل من دقايق قليلة (هنطلب منك تسجّل تاني لو لأ)')
+
+    # ---- English ----
+    PRIV_EN_FB = swap(PRIV_EN, '<li><b>Supabase</b> (database and authentication)', '(not linked to your account).</li>',
+        '<li><b>Firebase (by Google)</b> (Firestore database and sign-in): we store your progress and the basic Google account details (name, email, photo link) here. Servers: ' + FB_REGION_EN + '. Each student’s progress is a single record, and security rules prevent any account from reading or writing another account’s record. If Horus is available, we also store your conversation with Horus here (a private record with the same protection).</li>\n'
+        '<li><b>Supabase</b> (Frankfurt, EU): we used it before to store progress and for sign-in. After moving your data to Firebase we keep an old copy for a short time (about a month) so we can go back if something goes wrong, then it is deleted. We still use it to run the Horus assistant: the function that talks to Gemini, your daily question counter (deleted automatically after about a week), and the shared answer cache (not linked to your account). We do not store your new progress there.</li>')
+    PRIV_EN_FB = rep(PRIV_EN_FB, '<li><b>Vercel and GitHub</b>: hosting of the site files only. They do not store your progress.</li>',
+        '<li><b>Vercel and GitHub</b>: hosting of the site files. GitHub also runs the daily safety-backup job (with the project administrator’s permissions). The backups themselves are stored on Firebase, not on GitHub, and neither of them stores your progress.</li>')
+    PRIV_EN_FB = swap(PRIV_EN_FB, '<li>The database keeps a small number of automatic safety backups', 'They are deleted together with your account.</li>',
+        '<li>The database keeps a small number of automatic safety backups of your progress (3 daily ones in rotation, i.e. about the latest 3 days; after a sudden large drop in answers the older ones are kept for a while) so that wiped browser data cannot destroy your account progress. They are deleted together with your account.</li>')
+    PRIV_EN_FB = rep(PRIV_EN_FB, 'Deletion removes your data from the server only (including your Horus conversation and daily counter)',
+        'Deletion removes your data from Firebase (your progress, its backups, your Horus conversation and the sign-in account itself); your daily counter on Supabase is deleted automatically after about a week, and any old data about you that remains on Supabase from before the move is deleted with the rest of the old data (data you deleted earlier is not restored). Deletion runs from your device and needs a recent Google sign-in (we ask you to sign in again if it is not recent)')
+    open(os.path.join(out, 'privacy.html'), 'w', encoding='utf-8').write(
+        page('privacy', 'سياسة الخصوصية', 'Privacy Policy', PRIV_AR_FB, PRIV_EN_FB).replace(UPDATED_AR, FB_UPDATED_AR).replace(UPDATED_EN, FB_UPDATED_EN))
+    open(os.path.join(out, 'terms.html'), 'w', encoding='utf-8').write(page('terms', 'الشروط والأحكام', 'Terms of Service', TERMS_AR, TERMS_EN))
+    print('ok (firebase)')
+    sys.exit(0)
+
 open(os.path.join(out, 'privacy.html'), 'w', encoding='utf-8').write(page('privacy', 'سياسة الخصوصية', 'Privacy Policy', PRIV_AR, PRIV_EN))
 open(os.path.join(out, 'terms.html'), 'w', encoding='utf-8').write(page('terms', 'الشروط والأحكام', 'Terms of Service', TERMS_AR, TERMS_EN))
 print('ok')

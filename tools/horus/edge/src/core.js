@@ -8,6 +8,7 @@
 import { buildSources, chatQuery, chatHits, focusedQuery, expandedQuery, runSources, pack, makeSynonyms, arabicRatio, latinTokens } from './retrieve.js';
 import { SYNONYM_GROUPS } from './synonyms.js';
 import { PV, DISCLOSURE, CHAT_SYSTEM, Q_SYSTEM, REWRITE_SYSTEM, RETRY_AR } from './prompts.js';
+import { makeFirebaseVerifier, tokenKind, FbAuthError } from './firebase.js';
 
 const SIDS = ['anatomy', 'histology', 'physiology', 'biochemistry'];
 const SUBJ = { anatomy: 'Anatomy and Embryology', histology: 'Histology', physiology: 'Physiology', biochemistry: 'Biochemistry', all: 'Basic medical sciences' };
@@ -118,13 +119,30 @@ export function makeHandler(env, io) {
     return S;
   }
 
-  /* ---------- who is asking (the student's own Supabase session) ---------- */
+  /* ---------- who is asking: the student's own session, either a Firebase ID token (RS256, checked locally against Google's public keys)
+     or a Supabase session (asked of Supabase Auth). Firebase is only honoured when FIREBASE_PROJECT_ID is set on the function. ---------- */
   const tokens = new Map();
+  let fbv = null, fbp = '';
+  const fbVerifier = () => {
+    const p = E('FIREBASE_PROJECT_ID', '');
+    if (!p) return null;
+    if (!fbv || fbp !== p) { fbp = p; fbv = makeFirebaseVerifier({ projectId: p, fetch: doFetch, now }); }
+    return fbv;
+  };
   async function whoIs(req) {
     const m = /^Bearer\s+(\S+)$/i.exec(req.headers.get('authorization') || '');
     if (!m) throw new HErr('auth', 401, 'sign in first');
     const tok = m[1], hit = tokens.get(tok);
     if (hit && hit.exp > now()) return { id: hit.id };
+    if (tokenKind(tok) === 'firebase') {
+      const v = fbVerifier();
+      if (!v) throw new HErr('auth', 401, 'firebase sign-in is not enabled here');
+      try { const u = await v(tok); return { id: u.id }; }
+      catch (e) {
+        if (e instanceof FbAuthError) throw new HErr('auth', 401, 'bad session');
+        throw new HErr('svc', 503, 'could not load Google signing keys: ' + (e && e.message));
+      }
+    }
     if (!url() || !pub()) throw new HErr('noconfig', 500, 'Supabase keys are missing');
     const r = await doFetch(url() + '/auth/v1/user', { headers: { apikey: pub(), authorization: 'Bearer ' + tok } });
     if (!r.ok) throw new HErr('auth', 401, 'session expired');
@@ -341,7 +359,7 @@ export function makeHandler(env, io) {
       if (E('HORUS_OFF', '') === '1') throw new HErr('off', 503, 'Horus is switched off');
       const u = new URL(req.url);
       if (req.method === 'GET' && !u.searchParams.has('me')) {
-        return J({ ok: true, v: PV, ready: { gemini: !!env('GEMINI_API_KEY'), db: !!(url() && secret()) }, lim: { user: LIM_U(), global: LIM_G() } }, 200, cors);
+        return J({ ok: true, v: PV, ready: { gemini: !!env('GEMINI_API_KEY'), db: !!(url() && secret()), fb: !!env('FIREBASE_PROJECT_ID') }, lim: { user: LIM_U(), global: LIM_G() } }, 200, cors);
       }
       const user = await whoIs(req);
       if (req.method === 'GET') {

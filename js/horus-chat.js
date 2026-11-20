@@ -1,18 +1,17 @@
 /* Imhotep · إمحتب — حورس: الشات العايم (للمذاكرة، مش للامتحان)
-   زرار عايم في ركن الشاشة بيفتح بانل جانبي. الطالب بيسأل في المنهج، والسيرفر (Supabase Edge Function باسم horus) بيدوّر في كتب الأقسام
+   زرار عايم في ركن الشاشة بيفتح بانل جانبي. الطالب بيسأل في المنهج، والسيرفر (دالة باسم horus: Supabase Edge Function أو Firebase Cloud Function حسب المزوّد في js/cloud.js) بيدوّر في كتب الأقسام
    وبيرجّع الإجابة مصاغة. الموقع نفسه مفيهوش مفتاح Gemini ولا بيكلّم Gemini: بيكلّم الدالة بتوكن الطالب بس.
 
    - مقفول من js/ai-config.js (IM.AI.chat.on). في وضع التجربة (pilot:true) بيتفتح بس على متصفح فتح الموقع مرة بـ ?horus=1 (وبيتقفل بـ ?horus=0).
    - بيشتغل بس لو حفظ التقدّم على حساب جوجل شغّال (js/cloud.js) والطالب مسجّل دخول: الحد اليومي والمحادثة المحفوظة مربوطين بالحساب.
    - مخفي في #/run/* ومقفول (فيه قفل) طول ما فيه امتحان مفتوح (الساعة المائية / الترقية / التقييم الأسبوعي). القفل جوه الموقع بس: مفيش حاجة
      تمنع الطالب يفتح جوجل أو ذكاء اصطناعي تاني في تبويب تاني.
-   - المحادثة محفوظة على الجهاز (localStorage، لكل حساب) وعلى الحساب (جدول horus_chat بصلاحية الطالب نفسه وRLS)، وبتندمج بين الأجهزة بالاتحاد.
+   - المحادثة محفوظة على الجهاز (localStorage، لكل حساب) وعلى الحساب (horus_chat بصلاحية الطالب نفسه: RLS في Supabase وقواعد Firestore في Firebase)، وبتندمج بين الأجهزة بالاتحاد.
    - الرسايل بتتعرض بـ DOM nodes بس (من غير innerHTML) من نص الإجابة. */
 (function(){
 'use strict';
 var IM=window.IM, h=IM.h, icon=IM.icon, S=IM.store;
 var CC=(IM.AI&&IM.AI.chat)||{on:false};
-var PATH=CC.path||'/functions/v1/horus';
 var SUBJ=[['all','الكل'],['anatomy','التشريح'],['histology','الهستولوجيا'],['physiology','وظائف الأعضاء'],['biochemistry','الكيمياء الحيوية']];
 var KSID='im_hc_sid', HK='im_hc_', KSEEN='im_hc_seen', CAP=60;
 var STAR='M0.00 -20.00 C3.20 -9.60 9.60 -3.20 20.00 0.00 C9.60 3.20 3.20 9.60 0.00 20.00 C-3.20 9.60 -9.60 3.20 -20.00 0.00 C-9.60 -3.20 -3.20 -9.60 0.00 -20.00Z';
@@ -22,7 +21,7 @@ var pilotOn=(function(){ try{ var u=new URL(location.href), q=u.searchParams.get
   if(q==='1') localStorage.setItem('im_horus_pilot','1'); else if(q==='0') localStorage.removeItem('im_horus_pilot');
   if(q!==null){ u.searchParams.delete('horus'); try{ history.replaceState(null,'',u.pathname+(u.search||'')+u.hash); }catch(e){} }
   return localStorage.getItem('im_horus_pilot')==='1'; }catch(e){ return false; } })();
-function on(){ return !!(CC.on&&(!CC.pilot||pilotOn)&&IM.cloudOn&&IM.cloudOn()&&IM.bank&&IM.bank.ready&&!IM.bank.single); }
+function on(){ return !!(CC.on&&(!CC.pilot||pilotOn)&&IM.cloudOn&&IM.cloudOn()&&(!IM.cloudFnReady||IM.cloudFnReady())&&IM.bank&&IM.bank.ready&&!IM.bank.single); }
 function uid(){ return IM.cloudUid?IM.cloudUid():''; }
 function signedIn(){ return !!(IM.cloudState&&IM.cloudState().signedIn&&uid()); }
 function motionOff(){ return document.documentElement.classList.contains('calm')||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches); }
@@ -87,20 +86,18 @@ var syncing=null, syncT=null;
 function scheduleSync(ms){ if(syncT) return; syncT=setTimeout(function(){ syncT=null; syncNow(); },ms); }
 function syncNow(){
   if(syncing) return syncing;
-  if(!uid()||!IM.cloudCall) return Promise.resolve('off');
+  if(!uid()||!IM.cloudChatGet) return Promise.resolve('off');
   loadH(); var u=Hs.uid;
-  syncing=IM.cloudCall('GET','/rest/v1/horus_chat?select=msgs&user_id=eq.'+encodeURIComponent(u)).then(function(r){
-    if(!r.ok) throw new Error('http');
+  syncing=IM.cloudChatGet().then(function(row){
     if(Hs.uid!==u) return 'switched';
-    var row=r.json&&r.json[0], before=ids(Hs.msgs)+'|'+Hs.clr;
+    var before=ids(Hs.msgs)+'|'+Hs.clr;
     var remIds=row?ids((row.msgs||[]).filter(okMsg)):'', remClr=0;
     (row&&row.msgs||[]).forEach(function(m){ if(m&&m.i==='~') remClr=Math.max(remClr,+m.ts||0); });
     if(row) mergeRemote(row.msgs);
     var changed=before!==(ids(Hs.msgs)+'|'+Hs.clr);
     saveH();
     if(!row||remIds!==ids(Hs.msgs)||remClr!==Hs.clr){
-      return IM.cloudCall('POST','/rest/v1/horus_chat',{body:{user_id:u,msgs:remoteBody()},prefer:'resolution=merge-duplicates,return=minimal'}).then(function(w){
-        if(!w.ok&&w.status!==201&&w.status!==204) throw new Error('http');
+      return IM.cloudChatPut(remoteBody()).then(function(){
         Hs.sync=Date.now(); saveH(); return changed?'merged':'pushed';
       });
     }
@@ -311,7 +308,7 @@ var ERR={
   net:'مفيش اتصال بالنت دلوقتي، أو الرد اتأخر. جرّب تاني.'
 };
 function api(body){
-  return IM.cloudCall('POST',PATH,{body:body,timeout:90000}).then(function(r){
+  return IM.cloudFn('POST','',{body:body,timeout:90000}).then(function(r){
     var j=r.json||{};
     if(r.ok&&j.ok) return j;
     var e=new Error('horus'); e.j=j; e.code=j.err||(r.status===401?'auth':(r.status===429?'slow':'svc')); throw e;
@@ -383,7 +380,7 @@ function send(text,Q){
 }
 function refreshMe(){
   if(!signedIn()) return;
-  IM.cloudCall('GET',PATH+'?me=1',{timeout:15000}).then(function(r){
+  IM.cloudFn('GET','?me=1',{timeout:15000}).then(function(r){
     var j=r.json||{};
     if(r.ok&&j.ok){ left=+j.left; lim=+j.lim; setLeft(); setComposer(); }
   },function(){});

@@ -1,0 +1,78 @@
+rules_version = '2';
+/* Imhotep · إمحتب — قواعد Firestore (بديل RLS في Supabase). بتتنشر من الـ workflow (action: deploy) أو بالنسخ واللصق في Firebase console ← Firestore ← Rules (انظر tools/firebase/README.md).
+   المبدأ زي Supabase بالظبط: الطالب بيقرا ويكتب صفه هو بس (uid بتاعه = رقم المستخدم)، وأي حاجة تانية مقفولة.
+   مفيش Cloud Functions (خطة Spark): النسخ الاحتياطية بتعملها مهمة GitHub Actions بصلاحية الأدمن (بتتخطّى القواعد دي)، ومسح الحساب بيتعمل من المتصفح بصلاحية الطالب نفسه.
+
+   progress/{uid}  : data (نص JSON)، rev، device، createdAt، updatedAt (و srcAt: بيكتبه النقل من Supabase بس، الموقع ما بيلمسوش).
+       الإنشاء لازم rev == 1. التعديل لازم rev == rev القديم + 1 (ده نفس شرط rev=eq.N في Supabase: لو جهاز تاني كتب قبلنا القاعدة بترفض والواجهة بتعمل دمج).
+       createdAt و updatedAt من وقت السيرفر بس. الطالب يقدر يمسح مستنده هو (مسح الحساب).
+   horus_chat/{uid}: msgs (نص JSON)، by، updatedAt. الطالب يقرا/يكتب/يمسح بتاعه بس.
+   progress_backups/{id}: بيكتبها الأدمن بس (مهمة النسخ الاحتياطي + النقل). الطالب يقرا ويمسح بتاعته بس (uid جوّاها = uid الطالب).
+   deleted_accounts/{uid}: علامة بيكتبها الطالب نفسه وقت مسح حسابه (uid ووقت السيرفر بس، مفيش قراءة). بتمنع إعادة إنشاء بيانات حساب اتمسح
+       (جهاز تاني لسه توكنه شغّال، أو نقل متكرر من Supabase). الـ exists() بتتحسب قراءة، بس في الإنشاء بس (نادر). */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function mine(uid) { return signedIn() && request.auth.uid == uid; }
+    function deleted(uid) { return exists(/databases/$(database)/documents/deleted_accounts/$(uid)); }
+
+    match /progress/{uid} {
+      allow get: if mine(uid);
+
+      allow create: if mine(uid) && !deleted(uid)
+        && request.resource.data.keys().hasOnly(['data', 'rev', 'device', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['data', 'rev', 'createdAt', 'updatedAt'])
+        && request.resource.data.data is string && request.resource.data.data.size() > 1 && request.resource.data.data.size() <= 900000
+        && request.resource.data.rev is int && request.resource.data.rev == 1
+        && (!('device' in request.resource.data) || (request.resource.data.device is string && request.resource.data.device.size() <= 100))
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if mine(uid)
+        && request.resource.data.keys().hasOnly(['data', 'rev', 'device', 'createdAt', 'updatedAt', 'srcAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['data', 'rev', 'device', 'updatedAt'])
+        && request.resource.data.data is string && request.resource.data.data.size() > 1 && request.resource.data.data.size() <= 900000
+        && request.resource.data.rev is int && request.resource.data.rev == resource.data.rev + 1
+        && (!('device' in request.resource.data) || (request.resource.data.device is string && request.resource.data.device.size() <= 100))
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if mine(uid);
+    }
+
+    /* قراءة بتاعته بس (بالـ query where uid == uid بتاعه: الموقع بيستخدمها وقت مسح الحساب) والمسح بتاعته بس. الكتابة للأدمن بس. */
+    match /progress_backups/{id} {
+      allow get, list: if signedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /horus_chat/{uid} {
+      allow get: if mine(uid);
+      allow create: if mine(uid) && !deleted(uid)
+        && request.resource.data.keys().hasOnly(['msgs', 'by', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['msgs', 'updatedAt'])
+        && request.resource.data.msgs is string && request.resource.data.msgs.size() <= 400000
+        && (!('by' in request.resource.data) || (request.resource.data.by is string && request.resource.data.by.size() <= 40))
+        && request.resource.data.updatedAt == request.time;
+      allow update: if mine(uid)
+        && request.resource.data.keys().hasOnly(['msgs', 'by', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['msgs', 'updatedAt'])
+        && request.resource.data.msgs is string && request.resource.data.msgs.size() <= 400000
+        && (!('by' in request.resource.data) || (request.resource.data.by is string && request.resource.data.by.size() <= 40))
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if mine(uid);
+    }
+
+    /* مفيش قراءة ولا تعديل ولا مسح. الإنشاء بس، مرة واحدة، بـ uid الطالب نفسه ووقت السيرفر. */
+    match /deleted_accounts/{uid} {
+      allow create: if mine(uid)
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time;
+    }
+
+    /* meta (حالة النسخ الاحتياطي) وأي حاجة تانية: مقفولة على الطلبة. */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
