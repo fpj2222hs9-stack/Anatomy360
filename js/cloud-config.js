@@ -23,10 +23,10 @@ window.IM.CLOUD = {
   redirect: '',
   provider: 'supabase',
   fb: {
-    projectId: '',
-    apiKey: '',
-    clientId: '',
-    redirects: [],
+    projectId: 'imhotep-22',
+    apiKey: 'AIzaSyD1lpm7R2iIW3gFAiUqk43Cb_xbCnGeYqA',
+    clientId: '424706377828-27npdqsv7mkji4jvj1rrh2trp2h0ilam.apps.googleusercontent.com',
+    redirects: ['https://imhotep-lac.vercel.app/', 'https://fpj2222hs9-stack.github.io/Anatomy360/'],
     responseType: 'id_token'
   }
 };

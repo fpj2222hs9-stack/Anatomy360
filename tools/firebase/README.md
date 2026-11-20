@@ -56,7 +56,7 @@
 
 وحط `tools/firebase/workflows/firebase.yml` في **`.github/workflows/firebase.yml`** (من الواجهة: Add file ← Create new file). الـ workflow بتاع الـ unzip مابيقدرش يكتب هناك.
 
-### د) ملء `js/cloud-config.js`
+### د) ملء `js/cloud-config.js` (**اتملا في نسخة 27 بقيمك:** مشروع `imhotep-22` وبقية القيم العامة، و`provider` لسه `'supabase'`)
 ```js
 provider: 'supabase',            // لسه، مش هنغيّره دلوقتي
 fb: { projectId: '…', apiKey: '…', clientId: '….apps.googleusercontent.com',
@@ -131,7 +131,7 @@ select max(octet_length(data::text)) from public.progress;
 | Gemini الحقيقي مع توكن Firebase | `selftest` مع `ask` + سؤال حورس بـ `?fb=1` |
 | حصة Firestore الحقيقية | بتتراقب في Firebase ← Usage |
 
-اللي اتجرّب هنا: اختبارات Node (نسخ احتياطي ١٠، نقل ١٤، تحقق توكن Firebase ٢٣، handler حورس ١٩، أولويات ١١)، واختبارات متصفح على محاكي Firebase (cloud1، cloud2، حورس، النقل، التبديل) ومحاكي Supabase، كلها بتعدّي.
+اللي اتجرّب هنا: **إعدادك الحقيقي** (`fb-config.cjs`) بيبني طلب دخول جوجل صح على رابطيك الحقيقيين (client_id بتاعك وredirect_uri مطابق حرفيًا للمسجّل، من غير أي مفتاح في الرابط، ومن غير أي اتصال حقيقي)، واختبارات Node (نسخ احتياطي ١٠، نقل ١٤، تحقق توكن Firebase ٢٣، handler حورس ١٩، أولويات ١١)، واختبارات متصفح على محاكي Firebase (cloud1، cloud2، حورس، النقل، التبديل) ومحاكي Supabase، كلها بتعدّي.
 
 ## ١٠) ملفات المجلد
 | | |
