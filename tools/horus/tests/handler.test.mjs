@@ -1,12 +1,10 @@
 import assert from 'assert';
 import fs from 'fs';
 import { makeHandler } from '../edge/src/core.js';
-import { makeBackend, ENV, req } from './fake-backend.mjs';
+import { makeBackend, ENV, req, loadPassages } from './fake-backend.mjs';
 
 let pass = 0, fail = 0;
 async function t(name, fn) { try { await fn(); pass++; console.log('  ok  ' + name); } catch (e) { fail++; console.log('  FAIL ' + name + '\n      ' + (e && e.stack || e).split('\n').slice(0, 4).join('\n      ')); } }
-const rows = JSON.parse(fs.readFileSync(new URL('../out/passages.json', import.meta.url)));
-const anat = rows.find(r => r.sid === 'anatomy' && /axillary nerve/i.test(r.body) && /deltoid/i.test(r.body));
 const QEN = 'Which nerve supplies the deltoid muscle? the axillary nerve';
 const j = async r => { const x = await r.json(); return x; };
 function setup(envOver, bopts) { const be = makeBackend(bopts); const h = makeHandler(ENV(envOver), { fetch: be.fetch }); return { be, h, st: be.st }; }
