@@ -21,7 +21,7 @@ IM.noteFor=function(Q,pick){
     if(pick&&pick===bk&&!both) out.push(h('p.res-note.warn',{},icon('flag',16),h('span',{text:'إجابتك كانت المفتاح القديم. المفتاح الجديد هو اللي بيتحسب.'})));
   } else if(Q.fx){ out.push(h('p.res-note',{},icon('info',16),h('span',{text:'ملاحظة: '+Q.fx}))); }
   if(Q.alt) out.push(h('p.res-note.doubt',{},icon('scale',16),h('span',{},'مفتاح الملزمة هنا شكله غير دقيق علميًا'+(Q.alt!=='?'?'، والإجابة الأرجح: ':' (مش مطابق لنص السؤال)'),Q.alt!=='?'?IM.n(Q.alt.toUpperCase()):'','. المحسوب لك هو المفتاح المطبوع.')));
-  if(Q.review&&!Q.alt) out.push(h('p.res-note.doubt',{},icon('eye',16),h('span',{text:'السؤال قيد المراجعة. المحسوب لك هو مفتاح الملزمة.'})));
+  if(Q.review&&!Q.alt) out.push(h('p.res-note.doubt',{},icon('eye',16),h('span',{text:(Q.fix?'السؤال قيد المراجعة مع الدكتور. المحسوب لك هو المفتاح المصحّح فوق.':'السؤال قيد المراجعة. المحسوب لك هو مفتاح الملزمة.')+(Q.rvwhy?' '+Q.rvwhy:'')})));
   if(Q.canc) out.push(h('p.res-note.doubt',{},icon('cross',16),h('span',{text:'السؤال ده ملغي في جدول الملزمة. بيظهر بمفتاحه المطبوع بس ومش بيتحسب.'})));
   if(!Q.keys.length) out.push(h('p.res-note.doubt',{},icon('warn',16),h('span',{text:Q.rv?Q.rv:'مفيش مفتاح مطبوع للسؤال ده في الملزمة، فمش بيتحسب.'})));
   if(Q.keys.length>1) out.push(h('p.res-note',{},icon('check',16),h('span',{},'الإجابات المقبولة: ',IM.n(fmtKeys(Q)))));

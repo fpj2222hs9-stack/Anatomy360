@@ -6,7 +6,7 @@ const errs=[];
 async function mk(b,name,w){
   const ctx=await b.newContext({viewport:{width:w||1100,height:900}});
   await ctx.route('**/js/board-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM.BOARD_URL='"+BOARD+"';"}));
-  await ctx.addInitScript((nm)=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1})); localStorage.setItem('im_user',JSON.stringify({name:nm,v:1})); }catch(e){} },name);
+  await ctx.addInitScript((nm)=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); localStorage.setItem('im_user',JSON.stringify({name:nm,v:1})); }catch(e){} },name);
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
   await p.goto(SITE); await p.waitForFunction(()=>window.IM&&IM.bank&&IM.bank.ready,{timeout:60000}); await p.waitForTimeout(500);
   await p.evaluate(()=>{ IM.bank.order.filter(id=>IM.bank.q[id].elig).slice(0,30).forEach(id=>{ const Q=IM.bank.q[id]; IM.record(Q,Q.keys[0],5000); }); });

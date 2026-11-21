@@ -100,7 +100,7 @@ IM.forgetAnswers=function(ids){ ids.forEach(function(id){ delete IM.st.ans[id]; 
 IM.isMarked=function(id){ return !!IM.st.marks[id]; };
 IM.toggleMark=function(id){ if(IM.st.marks[id]) delete IM.st.marks[id]; else IM.st.marks[id]=Date.now(); touch('marks'); IM.emit('marks',id); return !!IM.st.marks[id]; };
 IM.wrongIds=function(sid){ return Object.keys(IM.st.wrong).filter(function(id){ var Q=IM.bank.q[id]; return Q&&Q.elig&&(!sid||Q.sid===sid); }); };
-IM.markedIds=function(sid){ return Object.keys(IM.st.marks).filter(function(id){ var Q=IM.bank.q[id]; return Q&&(!sid||Q.sid===sid); }); };
+IM.markedIds=function(sid){ return Object.keys(IM.st.marks).filter(function(id){ var Q=IM.bank.q[id]; return Q&&!Q.gone&&(!sid||Q.sid===sid); }); };
 
 /* ---------- aggregates (cached until the next answer) ---------- */
 var cache={}; IM.on('answer',function(){ cache={}; }); IM.on('bank',function(){ cache={}; });

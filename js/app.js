@@ -46,8 +46,9 @@ function start(){
       IM.route(); IM.splash(false);
       if(IM.tourMaybe) IM.tourMaybe();
       if(IM.boardAnnounceMaybe) IM.boardAnnounceMaybe();       /* إعلان لوحة الشرف: مرة واحدة، وبعد الجولة للجُدد */
+      var fixAnn=IM.fixAnnounceMaybe?IM.fixAnnounceMaybe():false;      /* إشعار تصحيحات الأسئلة: مرة واحدة وبيشمل «جاوبتها بالقديم» فمفيش داعي للتوست معاه */
       var pend=IM.pendingNotices();
-      if(pend.length) setTimeout(function(){ IM.toast('اتصحّح مفتاح '+pend.length+' سؤال جاوبته قبل كده.',{icon:'scale',ms:7000,action:{label:'شوفهم',fn:function(){ IM.go('#/corrections'); }}}); },900);
+      if(pend.length&&!fixAnn) setTimeout(function(){ IM.toast('اتصحّح مفتاح '+pend.length+' سؤال جاوبته قبل كده.',{icon:'scale',ms:7000,action:{label:'شوفهم',fn:function(){ IM.go('#/corrections'); }}}); },900);
     }
     if(IM.cloudStart) IM.cloudStart();
     (IM.cloudBoot?IM.cloudBoot():Promise.resolve()).catch(function(){}).then(function(){

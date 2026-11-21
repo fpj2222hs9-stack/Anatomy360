@@ -43,6 +43,66 @@ var UPDATES=[
 ];
 IM.UPDATES=UPDATES;
 
+/* ---------- مراجعة 20 نوفمبر: أرقامها من js/fixes.js + إشعار على الشاشة مرة واحدة + مدخل في الجرس ---------- */
+var FX_ON='2026-11-20', FX_ANN='ann-fix-1120', FX_SINCE='2026-11-21';      /* اللي اتسجّل جديد من FX_SINCE ورا ماشافش المفاتيح القديمة أصلًا فمش بنقوله */
+function fixStats(){
+  var f=IM.FIXES||{}, g=IM.GONE||{}, r=IM.REVIEW||{}, o={fix:0,bio:0,ana:0,rv:0,gone:0};
+  Object.keys(f).forEach(function(id){ var x=f[id]; if(x.on!==FX_ON||x.off) return; o.fix++; if(/^b\d/.test(id)) o.bio++; else o.ana++; if(x.rvw) o.rv++; });
+  Object.keys(r).forEach(function(id){ if(r[id].on===FX_ON) o.rv++; });
+  Object.keys(g).forEach(function(id){ if(g[id].on===FX_ON) o.gone++; });
+  return o;
+}
+IM.fixStats=fixStats; IM.FIX_LAST=FX_ON;
+(function(){ var st=fixStats(); if(!st.fix&&!st.gone) return;
+  UPDATES.unshift({id:'fix-1120',date:FX_ON,icon:'scale',title:'تصحيحات ومراجعة جديدة للأسئلة',
+    text:'اتصحّح مفتاح '+st.fix+' سؤال ('+st.bio+' كيمياء حيوية و'+st.ana+' تشريح)، واتشال '+st.gone+' سؤال ملغي أو معيب، وبقى '+st.rv+' أسئلة قيد المراجعة مع الدكتور. تفاصيل كل سؤال في صفحة التصحيحات.',
+    link:{label:'شوف الأسئلة المصححة',hash:'#/corrections'}});
+})();
+function fxSeen(){ return !!IM.st.seen[FX_ANN]; }
+function fxMark(){ IM.st.seen[FX_ANN]=Date.now(); try{ IM.save('seen'); }catch(e){} }
+function fxClear(){        /* مفيش لفافة ولا جولة ولا نافذة مفتوحة ولا شاشة الاسم */
+  var top=String(location.hash||'').replace(/^#\/?/,'').split('/')[0];
+  if(top==='run'||top==='result') return false;
+  if(!IM.st.seen['tour-v1']) return false;
+  if(document.querySelector('.ov,.tour-root')) return false;
+  var g=document.getElementById('gate'); if(g&&!g.hidden) return false;
+  return document.visibilityState!=='hidden';
+}
+IM.fixAnnounce=function(){
+  if(document.querySelector('.ov')) return null;
+  var st=fixStats(), pend=IM.pendingNotices?IM.pendingNotices().length:0, dlg=null;
+  function close(){ if(dlg) dlg.close(); }
+  var li=[
+    h('li',{},icon('check',16),h('span',{},h('b',{text:st.fix+' سؤال اتصحّح مفتاحه'}),' ('+st.bio+' كيمياء حيوية و'+st.ana+' تشريح). اللي بيتحسب لك دلوقتي هو المفتاح الجديد.')),
+    h('li',{},icon('eye',16),h('span',{},h('b',{text:st.rv+' أسئلة قيد المراجعة'}),' مع الدكتور، وعليها علامة واضحة تحت السؤال.')),
+    h('li',{},icon('cross',16),h('span',{},h('b',{text:st.gone+' سؤال اتشال'}),' من الموقع لأنه ملغي أو اختياراته غلط، وسببه مكتوب في صفحة التصحيحات.'))
+  ];
+  if(pend) li.push(h('li.ann-me',{},icon('flag',16),h('span',{},h('b',{text:pend+' منهم جاوبتهم قبل كده بالمفتاح القديم'}),'، وهتلاقي إجابتك والصح جنب بعض.')));
+  var body=h('div.ann',{},
+    h('div.ann-art',{'aria-hidden':'true'},h('span.ann-ring'),h('span.ann-ic',{},icon('scale',38))),
+    h('div.ann-eb',{text:'بعد المراجعة'}),
+    h('h3.display.ann-h',{text:'اتراجعت أسئلة واتصحّحت مفاتيح'}),
+    h('p.ann-p',{text:'راجعنا بنوك الكيمياء الحيوية والتشريح مع مفاتيح التصحيح، وده اللي اتغيّر:'}),
+    h('ul.ann-ul',{},li));
+  var go=h('button.btn.primary.lg',{type:'button',onclick:function(){ close(); IM.go('#/corrections'); }},icon('scale',18),'شوف الأسئلة المصححة');
+  var later=h('button.btn.ghost',{type:'button',onclick:close},'تمام');
+  fxMark();
+  dlg=IM.modal({title:'تصحيحات الأسئلة',cls:'dlg-ann',body:body,foot:[go,later],focus:'.dlg-f .btn.primary'});
+  return dlg;
+};
+/* بتظهر لوحدها مرة واحدة لكل طالب (العلامة بتتسجّل أول ما تظهر)، وبعد الجولة وبعد ما أي نافذة تتقفل. بترجّع true لو لسه هتظهر. */
+IM.fixAnnounceMaybe=function(){
+  if(fxSeen()) return false;
+  var u=IM.st.user, ck=u&&u.created?IM.dayKey(new Date(u.created)):null;
+  if(ck&&ck>=FX_SINCE){ fxMark(); return false; }
+  var iv=setInterval(function(){
+    if(fxSeen()){ clearInterval(iv); return; }
+    if(!fxClear()) return;
+    clearInterval(iv); IM.fixAnnounce();
+  },1200);
+  return true;
+};
+
 /* ---------- personal notices (saved) ---------- */
 IM.notify=function(n){
   if(!n||!n.id) return false;
@@ -69,6 +129,7 @@ function build(){
   if(pend.length) me.push({id:'p-fix',kind:'act',icon:'scale',title:'اتصحّح مفتاح '+pend.length+' سؤال جاوبته قبل كده',text:'اتأكد إنك مذاكر الإجابة الصح، وهتلاقي الإجابة القديمة والجديدة جنب بعض.',link:{label:'شوف التصحيحات',hash:'#/corrections'},unread:true,sticky:true});
   IM.st.notes.forEach(function(n){ me.push({id:n.id,kind:'me',icon:n.icon,title:n.title,text:n.text,ts:n.ts,link:n.link,unread:!IM.st.seen[seenKey(n.id)]}); });
   UPDATES.forEach(function(u){ upd.push({id:u.id,kind:'upd',icon:u.icon,title:u.title,text:u.text,date:u.date,link:u.link,unread:!isRead({id:u.id,kind:'upd',date:u.date})}); });
+  upd.sort(function(a,b){ return a.date<b.date?1:(a.date>b.date?-1:0); });      /* الأحدث أول حتى لو ملف تاني ضاف مدخل في الأول (ترتيب ثابت لنفس اليوم) */
   return {me:me,upd:upd};
 }
 IM.unreadCount=function(){ var b=build(); return b.me.concat(b.upd).filter(function(x){ return x.unread; }).length; };

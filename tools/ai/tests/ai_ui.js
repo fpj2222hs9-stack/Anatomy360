@@ -5,7 +5,7 @@ let fails=0; const ok=(c,m)=>{ console.log((c?'PASS ':'FAIL ')+m); if(!c) fails+
 const errs=[];
 async function mk(b,aiOn,files,viewport){
   const ctx=await b.newContext({viewport:viewport||{width:1100,height:900},colorScheme:'light'});
-  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-honor-ready':1})); localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1})); }catch(e){} });
+  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1})); }catch(e){} });
   let aiFetches=0;
   await ctx.route('**/js/ai-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM=window.IM||{};window.IM.AI={on:"+(aiOn?'true':'false')+",base:'ai/'};"}));
   await ctx.route('**/ai/*.json',r=>{ aiFetches++; const n=r.request().url().split('/').pop(); if(files&&files[n]) r.fulfill({contentType:'application/json',body:JSON.stringify(files[n])}); else r.fulfill({status:404,body:'nf'}); });
@@ -126,7 +126,7 @@ const goQ=async(p,idx)=>{ await p.keyboard.press('Enter'); await p.waitForSelect
 
   /* ===== 5) موبايل + دارك ===== */
   { const ctx=await b.newContext({viewport:{width:390,height:844},colorScheme:'dark',deviceScaleFactor:2});
-    await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-honor-ready':1})); localStorage.setItem('im_user',JSON.stringify({name:'م',v:1})); localStorage.setItem('im_settings',JSON.stringify({theme:'dark'})); }catch(e){} });
+    await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); localStorage.setItem('im_user',JSON.stringify({name:'م',v:1})); localStorage.setItem('im_settings',JSON.stringify({theme:'dark'})); }catch(e){} });
     await ctx.route('**/js/ai-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM=window.IM||{};window.IM.AI={on:true,base:'ai/'};"}));
     await ctx.route('**/ai/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(FILE['anatomy.json'])}));
     const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));

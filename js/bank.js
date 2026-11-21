@@ -104,6 +104,7 @@ function parseSubject(meta,pkg,data){
   function pushQ(Q,part,sec){
     Q.sid=meta.id; Q.part=part.id; Q.sec=sec.id; Q.seq=seq++;
     if(IM.applyFix) IM.applyFix(Q);   /* تصحيحات ما بعد الداتا (js/fixes.js): الداتا نفسها ما بتتعدّلش */
+    if(Q.gone){ Q.sources=[]; Q.groups=[]; Q.elig=false; Q.block=''; bank.q[Q.id]=Q; return; }      /* اتشال من الموقع: بيفضل في bank.q بس (مفيش لفافة/علامة قديمة تقع) ومش في أي قايمة ولا عدّاد */
     Q.sources=Q.tags.length?Q.tags:[]; Q.groups=[]; Q.tags.forEach(function(t){ IM.srcGroups(t).forEach(function(g){ if(Q.groups.indexOf(g)<0) Q.groups.push(g) }) });
     if(!Q.groups.length) Q.groups.push('بدون وسم');
     Q.elig=(Q.keys.length>0&&!Q.canc&&Q.keys.every(function(k){ return Q.opts.some(function(o){return o.o===k}) }));

@@ -86,24 +86,40 @@ IM.screens.scales=function(view){
 
 /* ---------- key corrections ---------- */
 IM.screens.corrections=function(view){
-  var all=IM.corrections(), only=false, wrap=h('div.sx'); view.appendChild(wrap);
-  var pend=all.filter(function(c){return c.hit}).length;
+  var all=IM.corrections(), only='all', wrap=h('div.sx'); view.appendChild(wrap);
+  var pend=all.filter(function(c){return c.hit}).length, last=IM.FIX_LAST||'', fresh=all.filter(function(c){return c.q.late===last}).length;
   function render(){
     IM.clear(wrap);
-    wrap.appendChild(h('div.pg-h',{},h('div',{},IM.eyebrow('بعد المراجعة'),h('h1.display',{text:'تصحيحات المفاتيح'})),h('p.muted',{text:'أسئلة اتغيّر مفتاحها عن المطبوع في الملزمة. اللي بيتحسب لك هو المفتاح الجديد.'})));
+    wrap.appendChild(h('div.pg-h',{},h('div',{},IM.eyebrow('بعد المراجعة'),h('h1.display',{text:'تصحيحات المفاتيح'})),h('p.muted',{text:'أسئلة اتغيّر مفتاحها عن المطبوع في الملزمة. اللي بيتحسب لك هو المفتاح الجديد. تحت القايمة الأسئلة اللي اتشالت أو لسه قيد المراجعة.'})));
     if(!all.length){ wrap.appendChild(IM.empty('مفيش تصحيحات','كل المفاتيح زي ما هي في الملزمة.',h('a.btn',{href:'#/'},'الرئيسية'))); return; }
-    var chips=h('div.chips'); [[false,'الكل',all.length],[true,'جاوبتها بالمفتاح القديم',pend]].forEach(function(x){ chips.appendChild(h('button.tog'+(only===x[0]?'.on':''),{type:'button','aria-pressed':String(only===x[0]),onclick:function(){ only=x[0]; render(); }},x[1],h('span.mono.tog-n',{text:x[2]}))); });
+    var chips=h('div.chips'); [['all','الكل',all.length],['hit','جاوبتها بالمفتاح القديم',pend],['new','المراجعة الأخيرة',fresh]].forEach(function(x){ chips.appendChild(h('button.tog'+(only===x[0]?'.on':''),{type:'button','aria-pressed':String(only===x[0]),onclick:function(){ only=x[0]; render(); }},x[1],h('span.mono.tog-n',{text:x[2]}))); });
     wrap.appendChild(chips);
     var list=h('div.pp-list'); wrap.appendChild(list);
-    all.filter(function(c){ return !only||c.hit; }).forEach(function(c){
+    all.filter(function(c){ return only==='all'||(only==='hit'?c.hit:c.q.late===last); }).forEach(function(c){
       var Q=c.q, open=false, body=null, sec=IM.bank.subs[Q.sid].secs[Q.sec];
       var el=h('div.pp-i.'+IM.subClass(Q.sid));
       var hd=h('div.pp-h',{role:'button',tabindex:0,'aria-expanded':'false',onclick:tg,onkeydown:function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tg(); } }},h('span.dot'),h('span.pp-q',{dir:'ltr',lang:'en',text:Q.stem}),
         h('span.pp-m.muted',{},(sec?sec.en:'')+' · '+Q.bk.toUpperCase()+' ← '+Q.keys.map(function(k){return k.toUpperCase()}).join('+')),
-        c.hit?h('span.chip.fix',{},icon('flag',14),'جاوبتها بالقديم'):null);
+        c.hit?h('span.chip.fix',{},icon('flag',14),'جاوبتها بالقديم'):null,
+        c.q.review?h('span.chip.doubt',{},icon('eye',14),'قيد المراجعة'):null);
       function tg(){ open=!open; el.classList.toggle('open',open); hd.setAttribute('aria-expanded',String(open)); if(open&&!body){ body=h('div.pp-b'); var a=c.ans; body.appendChild(IM.questionBlock(Q,{item:{r:0},res:function(){ return {pick:a?a.l:'',ok:!!(a&&a.lo)}; },cut:function(){return null},spectate:true,tools:false,onMark:function(){ IM.toggleMark(Q.id); },onReport:function(){ IM.reportDialog(Q,a&&a.l); }}).el); el.appendChild(body); } else if(body) body.hidden=!open; }
       el.appendChild(hd); list.appendChild(el);
     });
+    if(only!=='hit'){
+      function extra(title,sub,ids,why){
+        var qs=ids.map(function(id){ return IM.bank.q[id]; }).filter(Boolean); if(!qs.length) return;
+        wrap.appendChild(h('h2.pp-sec',{},title,h('small',{text:'('+qs.length+') '+sub})));
+        var l2=h('div.pp-list'); wrap.appendChild(l2);
+        qs.forEach(function(Q){
+          var sec=IM.bank.subs[Q.sid].secs[Q.sec];
+          l2.appendChild(h('div.pp-i.static.'+IM.subClass(Q.sid),{},
+            h('div.pp-h',{},h('span.dot'),h('span.pp-q',{dir:'ltr',lang:'en',text:Q.stem}),h('span.pp-m.muted',{text:sec?sec.en:''})),
+            h('p.pp-why',{text:why(Q)})));
+        });
+      }
+      extra('قيد المراجعة','مفتاحها المطبوع زي ما هو',Object.keys(IM.REVIEW||{}),function(Q){ return Q.rvwhy||'قيد المراجعة مع الدكتور.'; });
+      extra('أسئلة اتشالت من الموقع','ملغية أو اختياراتها غلط',Object.keys(IM.GONE||{}),function(Q){ return Q.goneWhy||'اتشال بعد المراجعة.'; });
+    }
     IM.markNoticesSeen();
   }
   render();

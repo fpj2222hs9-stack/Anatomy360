@@ -16,7 +16,7 @@ async function ctxFor(b, site, board, storage, delayMs) {
   const ctx = await b.newContext({ viewport: { width: 1100, height: 900 }, serviceWorkers: 'block', storageState: storage });
   await ctx.route('**/js/board-config.js', r => r.fulfill({ contentType: 'application/javascript', body: "window.IM.BOARD_URL='" + board + "';" }));
   if (delayMs) await ctx.route('**/subjects/anatomy/anatomy.content.js', r => setTimeout(() => r.continue().catch(() => {}), delayMs));      /* أول ملف في البنك بيتأخر: بنك بطيء */
-  await ctx.addInitScript(() => { try { localStorage.setItem('im_seen', JSON.stringify({ 'tour-v1': 1, 'ann-honor-1': 1, 'ann-honor-ready': 1 })); } catch (e) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem('im_seen', JSON.stringify({ 'tour-v1': 1, 'ann-honor-1':1,'ann-fix-1120':1, 'ann-honor-ready': 1 })); } catch (e) {} });
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push('PAGEERR ' + e.message));
   p.posts = []; p.on('request', q => { if (q.url().startsWith(board) && q.method() === 'POST') { try { p.posts.push(JSON.parse(q.postData() || '{}')); } catch (e) { p.posts.push({}); } } });
   return { ctx, p };

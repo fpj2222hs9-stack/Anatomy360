@@ -6,7 +6,7 @@ const EXP={1:'c',2:'b',3:'b',4:'c',5:'b',6:'c',7:'c',8:'a',9:'c',10:'b',11:'c',1
 const errs=[];
 async function mk(b,noAdd){
   const ctx=await b.newContext({viewport:{width:1100,height:900}});
-  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1})); localStorage.setItem('im_user',JSON.stringify({name:'طالب',v:1,created:Date.now()-864e5*30})); }catch(e){} });
+  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); localStorage.setItem('im_user',JSON.stringify({name:'طالب',v:1,created:Date.now()-864e5*30})); }catch(e){} });
   if(noAdd) await ctx.route('**/js/fixes.js',async r=>{ const res=await r.fetch(); let t=await res.text(); t=t.replace(/IM\.ADDKEYS=\{[\s\S]*?\n\};\n/,'IM.ADDKEYS={};\n'); r.fulfill({response:res,body:t}); });
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push(e.message));
   await p.goto(SITE); await p.waitForFunction(()=>window.IM&&IM.bank&&IM.bank.ready,{timeout:60000}); await p.waitForTimeout(400); return p;

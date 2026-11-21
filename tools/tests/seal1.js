@@ -5,7 +5,7 @@ let fails=0; const ok=(c,m)=>{ console.log((c?'PASS ':'FAIL ')+m); if(!c) fails+
 const errs=[];
 async function mk(b,w){
   const ctx=await b.newContext({viewport:{width:w||1100,height:900}});
-  await ctx.addInitScript(()=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1})); }catch(e){} });
+  await ctx.addInitScript(()=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1})); }catch(e){} });
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message)); p.on('console',m=>{ if(m.type()==='error') errs.push('console '+m.text()); });
   return {ctx,p};
 }
