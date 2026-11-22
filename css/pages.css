@@ -81,6 +81,15 @@
 .nc-all{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);color:var(--ink);font-size:.8rem;cursor:pointer}
 .nc-all:hover:not(:disabled){background:var(--gold-soft)}
 .nc-all:disabled{opacity:.45;cursor:default}
+.nc-sech{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 14px 4px}
+.nc-sech .nc-sec{margin:0}
+.nc-clr{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 9px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);color:var(--ink-2);font-size:.74rem;cursor:pointer}
+.nc-clr:hover{background:var(--gold-soft)}
+.nc-clr.arm{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.nc-clr:focus-visible,.nc-i:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.nc-i.new{cursor:pointer}
+.nc-empty{padding:10px 14px;font-size:.82rem}
+.nc-keep{margin:8px 14px 12px;font-size:.74rem;line-height:1.7}
 .nc-s{overflow:auto;padding:4px 0 8px;overscroll-behavior:contain}
 .nc-sec{margin:12px 14px 4px;font:400 .76rem/1.4 var(--f-display);letter-spacing:.06em;color:var(--ink-3)}
 .nc-l{list-style:none;margin:0;padding:0}

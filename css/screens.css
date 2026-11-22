@@ -351,3 +351,13 @@ table.kbd kbd{display:inline-block;padding:3px 8px;border:1px solid var(--line-2
   .sx-lr{flex-wrap:wrap;gap:4px 12px}
   .sx-ll{flex:1 1 100%;order:-1}
 }
+
+.pp-why b{color:var(--ink)}
+.pp-opts{list-style:none;margin:0;padding:2px 14px 6px;display:grid;gap:4px}
+.pp-opts li{display:flex;gap:8px;align-items:baseline;font-size:.86rem;line-height:1.6;color:var(--ink-2);padding:5px 8px;border-radius:9px}
+.pp-opts li b{flex:none;width:1.4em;color:var(--muted);font-weight:700}
+.pp-opts li span{flex:1;min-width:0;overflow-wrap:anywhere}
+.pp-opts li.key{background:var(--ok-soft);color:var(--ink)}
+.pp-opts li.key b{color:var(--ok)}
+.pp-opts li em{flex:none;font-style:normal;font-size:.72rem;color:var(--ok);border:1px solid currentColor;border-radius:99px;padding:0 7px;line-height:1.5;align-self:center}
+.pp-key{margin:0;padding:2px 14px 4px;font-size:.8rem;color:var(--muted)}

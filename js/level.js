@@ -17,8 +17,9 @@ IM.STAGES=STAGES;
 IM.stageName=function(s){ return s.en+(s.tag?' · '+s.tag:''); };
 IM.stageAr=function(s){ return s.ar+(s.tag&&s.n===6?' ('+s.tag+')':''); };
 
-/* أوزان المؤشر (المجموع 100) */
-var W={mastery:50,accuracy:20,consistency:15,improvement:10,achievements:5};
+/* أوزان المؤشر (المجموع 100). v31 (22 نوفمبر): الانتظام (الستريك اليومي) بقى 5 بس بدل 15، والـ10 نقط راحوا للتثبيت (+5) والدقة (+5)،
+   عشان المؤشر يقيس المعرفة قبل الحضور. القديم: تثبيت 50 · دقة 20 · انتظام 15 · تحسّن 10 · إنجازات 5. */
+var W={mastery:55,accuracy:25,consistency:5,improvement:10,achievements:5};
 IM.LEVEL_WEIGHTS=W;
 
 function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
@@ -71,7 +72,7 @@ IM.level=function(){
   /* 2) الدقة: غلطة أول مرة بتتمحي بالتدريج بالمراجعة (1 ← 0.5 ← 0)، والنقطة الكاملة عند 90% (مخففة لو العدد قليل) */
   var ramp=Math.min(1,answered/60), acc=answered?fo/answered:0, accEff=answered?(answered-pen)/answered:0;
   var A=answered?clamp((accEff-0.5)/0.40,0,1)*ramp:0;
-  /* 3) الانتظام: أيام الشروق في آخر 30 يوم */
+  /* 3) الانتظام (الستريك اليومي، وزنه 5 نقاط بس): أيام الشروق في آخر 30 يوم */
   var lit30=0; for(var i=0;i<30;i++){ if(IM.lit(IM.addDays(today,-i))) lit30++; }
   var Cn=Math.min(1,lit30/26);          /* 26 يوم من 30 كفاية (4 أيام راحة) */
   /* 4) التحسّن: تصليح الأغلاط + اتجاه الدقة آخر أسبوعين */

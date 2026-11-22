@@ -87,7 +87,7 @@ IM.screens.scales=function(view){
 /* ---------- key corrections ---------- */
 IM.screens.corrections=function(view){
   var all=IM.corrections(), only='all', wrap=h('div.sx'); view.appendChild(wrap);
-  var pend=all.filter(function(c){return c.hit}).length, last=IM.FIX_LAST||'', fresh=all.filter(function(c){return c.q.late===last}).length;
+  var pend=all.filter(function(c){return c.hit}).length, last=IM.FIX_LAST||'', fresh=all.filter(function(c){return (c.q.late||'')>=last}).length;
   function render(){
     IM.clear(wrap);
     wrap.appendChild(h('div.pg-h',{},h('div',{},IM.eyebrow('بعد المراجعة'),h('h1.display',{text:'تصحيحات المفاتيح'})),h('p.muted',{text:'أسئلة اتغيّر مفتاحها عن المطبوع في الملزمة. اللي بيتحسب لك هو المفتاح الجديد. تحت القايمة الأسئلة اللي اتشالت أو لسه قيد المراجعة.'})));
@@ -95,7 +95,7 @@ IM.screens.corrections=function(view){
     var chips=h('div.chips'); [['all','الكل',all.length],['hit','جاوبتها بالمفتاح القديم',pend],['new','المراجعة الأخيرة',fresh]].forEach(function(x){ chips.appendChild(h('button.tog'+(only===x[0]?'.on':''),{type:'button','aria-pressed':String(only===x[0]),onclick:function(){ only=x[0]; render(); }},x[1],h('span.mono.tog-n',{text:x[2]}))); });
     wrap.appendChild(chips);
     var list=h('div.pp-list'); wrap.appendChild(list);
-    all.filter(function(c){ return only==='all'||(only==='hit'?c.hit:c.q.late===last); }).forEach(function(c){
+    all.filter(function(c){ return only==='all'||(only==='hit'?c.hit:(c.q.late||'')>=last); }).forEach(function(c){
       var Q=c.q, open=false, body=null, sec=IM.bank.subs[Q.sid].secs[Q.sec];
       var el=h('div.pp-i.'+IM.subClass(Q.sid));
       var hd=h('div.pp-h',{role:'button',tabindex:0,'aria-expanded':'false',onclick:tg,onkeydown:function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tg(); } }},h('span.dot'),h('span.pp-q',{dir:'ltr',lang:'en',text:Q.stem}),
@@ -106,19 +106,26 @@ IM.screens.corrections=function(view){
       el.appendChild(hd); list.appendChild(el);
     });
     if(only!=='hit'){
-      function extra(title,sub,ids,why){
+      function extra(title,sub,ids,why,opts){
         var qs=ids.map(function(id){ return IM.bank.q[id]; }).filter(Boolean); if(!qs.length) return;
         wrap.appendChild(h('h2.pp-sec',{},title,h('small',{text:'('+qs.length+') '+sub})));
         var l2=h('div.pp-list'); wrap.appendChild(l2);
         qs.forEach(function(Q){
-          var sec=IM.bank.subs[Q.sid].secs[Q.sec];
-          l2.appendChild(h('div.pp-i.static.'+IM.subClass(Q.sid),{},
-            h('div.pp-h',{},h('span.dot'),h('span.pp-q',{dir:'ltr',lang:'en',text:Q.stem}),h('span.pp-m.muted',{text:sec?sec.en:''})),
-            h('p.pp-why',{text:why(Q)})));
+          var sec=IM.bank.subs[Q.sid].secs[Q.sec], key=Q.goneKeys||[], card=h('div.pp-i.static.'+IM.subClass(Q.sid),{},
+            h('div.pp-h',{},h('span.dot'),h('span.pp-q',{dir:'ltr',lang:'en',text:Q.stem}),h('span.pp-m.muted',{text:sec?sec.en:''})));
+          if(opts&&Q.opts&&Q.opts.length){        /* السؤال المتشال: اختياراته والمفتاح المطبوع جنبها، وبعدها السبب */
+            var ol=h('ol.pp-opts',{dir:'ltr',lang:'en'});
+            Q.opts.forEach(function(o){ var k=key.indexOf(o.o)>-1;
+              ol.appendChild(h('li'+(k?'.key':''),{},h('b',{text:String(o.o).toUpperCase()}),h('span',{text:o.t}),k?h('em',{text:'المفتاح المطبوع'}):null)); });
+            card.appendChild(ol);
+            card.appendChild(h('p.pp-key',{text:key.length?'المفتاح المطبوع في الملزمة: '+key.map(function(k){return k.toUpperCase()}).join(' + '):'السؤال ملغي في الملزمة وملوش مفتاح مطبوع.'}));
+          }
+          card.appendChild(h('p.pp-why',{},h('b',{text:'سبب الإزالة: '}),why(Q)));
+          l2.appendChild(card);
         });
       }
       extra('قيد المراجعة','مفتاحها المطبوع زي ما هو',Object.keys(IM.REVIEW||{}),function(Q){ return Q.rvwhy||'قيد المراجعة مع الدكتور.'; });
-      extra('أسئلة اتشالت من الموقع','ملغية أو اختياراتها غلط',Object.keys(IM.GONE||{}),function(Q){ return Q.goneWhy||'اتشال بعد المراجعة.'; });
+      extra('أسئلة اتشالت من الموقع','ملغية أو اختياراتها غلط، مع اختياراتها ومفتاحها المطبوع وسبب الإزالة',Object.keys(IM.GONE||{}),function(Q){ return Q.goneWhy||'اتشال بعد المراجعة.'; },true);
     }
     IM.markNoticesSeen();
   }

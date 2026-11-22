@@ -1,5 +1,6 @@
 /* Imhotep · إمحتب — التقييم الأسبوعي.
-   امتحان بالساعة المائية أغلبه من أخطائك القديمة (محفوظة في إجاباتك حتى لو كفّة الأغلاط مسحتها)، والباقي أسئلة عادية.
+   امتحان بالساعة المائية أغلبه من أخطائك القديمة (محفوظة في إجاباتك حتى لو كفّة الأغلاط مسحتها)، والباقي أسئلة جاوبتها قبل كده.
+   (v31) كله من أسئلة الطالب جاوبها قبل كده: مفيش سؤال لسه ماحلّهوش بيدخل التقييم، ولا سؤال حالة مرتبط بيه.
    لو جبت 85% أو أكتر: كل غلطة أول مرة جاوبتها صح تاني بتتمحي بالتدريج (1 ← 0.5 ← 0) فتزيد دقتك ومؤشرك.
    إجباري أسبوعيًا بمعنى إن المحو الكامل مابيحصلش إلا هنا. مفيش خصم لو فوّت أسبوع أو جبت أقل من 85%. */
 (function(){
@@ -45,7 +46,7 @@ function allocate(bySid,total){
 }
 function groupBySid(items){ var m={}; items.forEach(function(x){ (m[x.sid]||(m[x.sid]=[])).push(x); }); Object.keys(m).forEach(function(s){ m[s].sort(function(a,b){ return b.key-a.key; }); }); return m; }
 
-/* خطة التقييم: errs = أخطاء مستحقة المراجعة، fresh = أسئلة عادية */
+/* خطة التقييم: errs = أخطاء مستحقة المراجعة، fresh = أسئلة جاوبتها قبل كده (السؤال اللي لسه ماتجاوبش مابيدخلش خالص) */
 IM.weeklyPlan=function(){
   var now=Date.now(), today=IM.dayKey(), groups={}, openErr=0;
   IM.bank.order.forEach(function(id){
@@ -64,8 +65,8 @@ IM.weeklyPlan=function(){
       }
       if(open||tier===2&&!due){ G.blocked=true; return; }       /* غلطة لسه ماجاش ميعادها: ماتتسحبش ولا تتحسب عادية */
     }
-    if(!G.fresh){
-      var recent=!!(a&&a.ts&&a.ts>now-3*DAY), w=!a?1.2:(a.lo?(a.fo?0.4:1.0):2.5);
+    if(!G.fresh&&a){                                     /* a = الطالب جاوب السؤال ده قبل كده. من غير إجابة مسبقة: مايتسحبش */
+      var recent=!!(a.ts&&a.ts>now-3*DAY), w=a.lo?(a.fo?0.4:1.0):2.5;
       G.fresh={id:id,sid:Q.sid,recent:recent,key:Math.pow(Math.max(1e-9,rnd()),1/w)};
     }
   });
@@ -79,8 +80,8 @@ IM.weeklyPlan=function(){
   var ids=[], seen={};
   function add(id){ if(!seen[id]){ seen[id]=1; ids.push(id); } }
   pickE.forEach(function(x){ add(x.id); }); pickF.forEach(function(x){ add(x.id); });
-  var bm=blockMap();                                                    /* سؤال الحالة يفضل معاه باقي أسئلته */
-  ids.slice().forEach(function(id){ var b=IM.bank.q[id].block; if(b&&bm[b]) bm[b].forEach(add); });
+  var bm=blockMap();                                                    /* سؤال الحالة يفضل معاه باقي أسئلته، بس اللي الطالب جاوبه قبل كده */
+  ids.slice().forEach(function(id){ var b=IM.bank.q[id].block; if(b&&bm[b]) bm[b].forEach(function(x){ if(IM.st.ans[x]) add(x); }); });
   return {ids:ids,errN:pickE.length,errDue:errs.length,openErr:openErr};
 };
 
@@ -156,7 +157,7 @@ IM.weeklyCard=function(){
   var wait=(inf.eligible&&!inf.canStart)?h('p.muted.cp-th',{text:'التقييم الجاي '+nextText(inf.nextAt)+(inf.week>=CFG.perWeek?' (وصلت للحد الأقصى '+CFG.perWeek+' تقييمات في الأسبوع).':'.')}):null;
   return h('section.card.cp-wk'+(inf.due?'.due':''),{},
     h('div.cp-wh',{},icon('water',22),h('div',{},h('h2.display',{text:'التقييم الأسبوعي'}),h('span.muted',{text:state}))),
-    h('p.muted',{text:CFG.n+' سؤال في '+CFG.minutes+' دقيقة بالساعة المائية، أغلبه (حوالي '+Math.round(CFG.errShare*100)+'%) من أخطائك القديمة، والباقي أسئلة عادية. لو جبت '+CFG.pass+'% أو أكتر، كل غلطة أول مرة جاوبتها صح بعد مراجعة قبل كده بتتمحي خالص، وكل غلطة راجعتها مرة بتبقى نص قيمة. أقل من '+CFG.pass+'% مفيهوش خصم.'+(L.errOpen?' عندك '+nf(L.errOpen)+' غلطة لسه مش ممحية.':' مفيش عندك غلطات مفتوحة.')}),
+    h('p.muted',{text:CFG.n+' سؤال في '+CFG.minutes+' دقيقة بالساعة المائية، أغلبه (حوالي '+Math.round(CFG.errShare*100)+'%) من أخطائك القديمة، والباقي من أسئلة جاوبتها قبل كده (مفيش سؤال جديد عليك). لو جبت '+CFG.pass+'% أو أكتر، كل غلطة أول مرة جاوبتها صح بعد مراجعة قبل كده بتتمحي خالص، وكل غلطة راجعتها مرة بتبقى نص قيمة. أقل من '+CFG.pass+'% مفيهوش خصم.'+(L.errOpen?' عندك '+nf(L.errOpen)+' غلطة لسه مش ممحية.':' مفيش عندك غلطات مفتوحة.')}),
     h('div.cp-acts',{},btn),wait);
 };
 function nf(n){ return Number(n).toLocaleString('en-US'); }

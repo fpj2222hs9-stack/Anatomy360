@@ -57,7 +57,11 @@ IM.FIXES={
   'g2_hand-8':{k:'c',on:'2026-11-20',
     fx:'محتويات الـmid-palmar space: أوتار الـflexors الطويلة للأصابع 3 و4 و5 + الـlumbricals (2 و3 و4) + أوعية وأعصاب الأصابع. الـulnar synovial bursa مش من محتوياتها. المطبوع b غلط.'},
   'g2_hand-31':{k:'c',on:'2026-11-20',
-    fx:'الـlumbricals بتنشأ من أوتار الـflexor digitorum profundus (مش superficialis)، وبتعمل flexion للـMCP وextension للـIP، واتنين منها بس (الإنسيين) بالـulnar nerve مش كلها median. المطبوع a غلط.'}
+    fx:'الـlumbricals بتنشأ من أوتار الـflexor digitorum profundus (مش superficialis)، وبتعمل flexion للـMCP وextension للـIP، واتنين منها بس (الإنسيين) بالـulnar nerve مش كلها median. المطبوع a غلط.'},
+  'g3_fetmem-1':{k:'a',on:'2026-11-21',src:'ISK 101 · ص109',
+    fx:'الـsecondary (definitive) yolk sac بيتكوّن في اليوم الـ13 من الحمل، يعني في الأسبوع التاني، لما خلايا جديدة من الـhypoblast تبطّن الـprimary yolk sac وجزء منه ينضغط (كتاب القسم ISK 101 ص109). في الأسبوع الرابع الـyolk sac بيتضغط بالـfolding ويبقى الـvitelline duct، مش ده وقت تكوّنه. المطبوع c غلط.'},
+  'g2_frontfore-8':{k:'c',on:'2026-11-21',rvw:true,src:'ISK 101 · ص209–210',
+    fx:'الـmedian nerve بيعدّي بين راسَي الـpronator teres (مش الـFDS)، وبعدين بينزل تحت الـflexor digitorum superficialis بينه وبين الـprofundus (كتاب القسم ISK 101 ص209–210)، فالاختيار d (المطبوع) مش صحيح. الاختيار c هو الصح في المراجع العامة: بطن الـFDS الخاص بالسبّابة بينفصل بدري في الساعد وده اللي بيدّي السبّابة حركة مستقلة. السؤال قيد المراجعة مع الدكتور.'}
 };
 
 /* مفاتيح مضافة لأسئلة الملزمة اللي ماكانش ليها مفتاح مطبوع (غير الأسئلة اللي اتصحّح مفتاحها فوق).
@@ -122,7 +126,9 @@ IM.GONE={
   'g2_bpinj-3':{on:'2026-11-20',why:'الاختيارات مش مطابقة للسؤال (منقولة من سؤال تاني).'},
   'g2_lymph-11':{on:'2026-11-20',why:'الاختيارات مش مطابقة للسؤال (منقولة من أسئلة الأوردة).'},
   'g3_fetmem-2':{on:'2026-11-20',why:'فيه إجابتين صح: الـamniochorionic membrane والـallantois الاتنين extraembryonic membranes.'},
-  'g3_fetmem-7':{on:'2026-11-20',why:'الاختيارات مش مطابقة للسؤال (منقولة من سؤال تاني).'}
+  'g3_fetmem-7':{on:'2026-11-20',why:'الاختيارات مش مطابقة للسؤال (منقولة من سؤال تاني).'},
+  'g2_axart-14':{on:'2026-11-21',why:'مفيش اختيار صح حسب كتاب القسم (ISK 101 ص175، وكتاب د. جلال ص44): الـsuperior thoracic artery بتخرج من الجزء الأول للـaxillary artery وبتغذّي الـsubclavius وبتتصل بالـintercostals بس. اللي بتخرم الـclavipectoral fascia وبتوصّل للثدي هي الـacromio-thoracic (والـlateral thoracic للثدي كمان)، فلا c ولا d صح.'},
+  'g2_medulnar-22':{on:'2026-11-21',why:'السؤال مش متماسك: نص الاختيار b مقطوع من الملزمة («…on lateral part of the») فمش ينفع نحكم عليه، والاختيار d (ضعف الـabduction) كمان صح مع إصابة الـulnar nerve لأن الـinterossei بتعمل abduction وadduction للأصابع.'}
 };
 /* أسئلة مفتاحها المطبوع فضل زي ما هو بس اتعلّمت «قيد المراجعة» (why بيظهر تحت السؤال). */
 IM.REVIEW={
@@ -138,7 +144,7 @@ IM.applyFix=function(Q){
     return Q;
   }
   var G=IM.GONE[Q.id];
-  if(G){ Q.gone=true; Q.keys=[]; Q.alt=''; Q.review=false; Q.fix=false; Q.canc=false; Q.late=G.on; Q.goneWhy=G.why; Q.rv='السؤال ده اتشال من الموقع بعد المراجعة. '+G.why; return Q; }
+  if(G){ Q.gone=true; Q.goneKeys=Q.keys.slice(); Q.keys=[]; Q.alt=''; Q.review=false; Q.fix=false; Q.canc=false; Q.late=G.on; Q.goneWhy=G.why; Q.rv='السؤال ده اتشال من الموقع بعد المراجعة. '+G.why; return Q; }
   var R=IM.REVIEW[Q.id];
   if(R&&!Q.bk&&!Q.canc){ Q.review=true; Q.rvwhy=R.why; Q.late=R.on; }
   var F=IM.FIXES[Q.id]; if(!F||Q.bk||Q.canc) return Q;
