@@ -46,5 +46,8 @@
 "العربية",
 "الموقع بقى متاح بالعربي وبالإنجليزي. اختار اللغة اللي هتكمّل بيها، وتقدر تغيّرها في أي وقت من قايمة اللوجو أو من الإعدادات.",
 "المتابعة بالعربي"
-]
+],
+"عنوان الملف (بالإنجليزي)": "File title (in English)",
+"اسم الطالب على الغلاف (اختياري)": "Student name on the cover (optional)",
+"هيفتح نافذة الطباعة: اختار «حفظ كـ PDF» وورق A4، وشغّل «Background graphics» وطفّي «Headers and footers». ملف الـPDF بالإنجليزي بالكامل ومفيش حاجة بتتبعت لأي مكان.": "The print window will open: choose \"Save as PDF\", paper size A4, turn \"Background graphics\" on and \"Headers and footers\" off. The PDF is entirely in English and nothing is sent anywhere."
 }
