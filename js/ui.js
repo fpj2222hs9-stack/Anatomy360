@@ -60,11 +60,96 @@ IM.sigBlock=function(){
     h('span.sig-sep',{'aria-hidden':'true',text:'·'}),
     h('span.sig-by',{text:'Assisted by'}),' ',h('span.sig-name.sig-as',{text:'Abo El-Magd'}));
 };
+/* ---------- language: one switch used by the logo menu, Settings, the sign-in screens ---------- */
+IM.langSeg=function(o){
+  o=o||{};
+  var w=h('div.seg.lang-seg',{role:'group','aria-label':'اللغة · Language','data-notr':''});
+  [['ar','العربية'],['en','English']].forEach(function(p){
+    var b=h('button',{type:'button',lang:p[0],'aria-pressed':String(IM.lang===p[0]),text:p[1],onclick:function(){
+      IM.$$('button',w).forEach(function(x){ x.setAttribute('aria-pressed',String(x===b)); });
+      IM.setLang(p[0]);                                   /* same language: just remembered · other language: saves and reloads */
+      if(o.onpick) o.onpick(p[0]);
+    }});
+    w.appendChild(b);
+  });
+  return w;
+};
+/* one-time choice for people who were already using the site before the English version existed */
+IM.langPrompt=function(){
+  if(document.getElementById('langPrompt')) return null;
+  var m;
+  function tile(l,big,small){ return h('button.lp-b',{type:'button',lang:l,onclick:function(){ IM.setLang(l); if(m) m.close(); }},h('b.display',{text:big}),h('span',{text:small})); }
+  var body=h('div.lp#langPrompt',{'data-notr':''},
+    h('p',{lang:'ar',dir:'rtl',text:'الموقع بقى متاح بالعربي وبالإنجليزي. اختار اللغة اللي هتكمّل بيها، وتقدر تغيّرها في أي وقت من قايمة اللوجو أو من الإعدادات.'}),
+    h('p',{lang:'en',dir:'ltr',text:'Imhotep is now available in Arabic and English. Choose the language you want to continue with. You can change it any time from the logo menu or Settings.'}),
+    h('div.lp-grid',{},tile('ar','العربية','المتابعة بالعربي'),tile('en','English','Continue in English')));
+  m=IM.modal({title:'اللغة · Language',body:body,cls:'dlg-lang',focus:'.lp-b',onclose:function(){ if(!IM.langChosen()) IM.setLang(IM.lang,false); if(IM.tourMaybe) IM.tourMaybe(); }});
+  return m;
+};
+IM.langPromptMaybe=function(){
+  if(IM.langChosen()) return;
+  function top(){ return String(location.hash||'').replace(/^#\/?/,'').split('/')[0]; }
+  var t=top();
+  if(t==='run'||t==='result'){                                   /* never on top of a scroll: first normal screen instead */
+    window.addEventListener('hashchange',function again(){ var x=top(); if(x==='run'||x==='result') return; window.removeEventListener('hashchange',again); IM.langPromptMaybe(); });
+    return;
+  }
+  IM.langPrompt();
+};
+
+/* ---------- logo menu: a side drawer (Home · Settings · About · language) ---------- */
+var drawer=null;
+function openDrawer(opener){
+  if(drawer) return;
+  var prev=opener||document.activeElement, closing=false;
+  function item(ic,label,fn){
+    return h('button.dr-i',{type:'button',onclick:function(){ close(); setTimeout(fn,0); }},icon(ic,20),h('span',{text:label}));
+  }
+  var panel=h('aside.dr',{role:'dialog','aria-modal':'true','aria-label':'القائمة'},
+    h('div.dr-h',{},
+      h('span.brand-m',{html:IM.pyr(6,{})}),
+      h('span.brand-t',{},h('span.latin.brand-en',{text:'Imhotep'}),h('span.display.brand-ar',{text:'إمحتب'})),
+      h('button.iconbtn.dr-x',{type:'button','aria-label':'إغلاق القائمة',onclick:function(){ close(); }},icon('cross',20))),
+    h('nav',{'aria-label':'القائمة'},
+      item('home','الرئيسية',function(){ IM.go('#/'); }),
+      item('sliders','الإعدادات',function(){ IM.settingsDialog(); }),
+      item('info','عن إمحتب',function(){ IM.go('#/about'); })),
+    h('div.dr-s',{},
+      h('h3',{},icon('globe',18),h('span',{text:'لغة الموقع'})),
+      IM.langSeg({onpick:function(){ setTimeout(function(){ close(); },120); }}),
+      h('p.muted',{text:'تغيير اللغة بيعيد تحميل الصفحة، وتقدّمك محفوظ.'})));
+  var ov=h('div.dr-ov#menuDrawer',{role:'presentation'},panel);
+  function key(e){
+    if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(); }
+    else if(e.key==='Tab'){
+      var f=IM.$$('button:not([disabled]),a[href]',panel).filter(function(x){ return x.offsetParent!==null; });
+      if(!f.length) return; var a=f[0], z=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey&&document.activeElement===z){ e.preventDefault(); a.focus(); }
+    }
+  }
+  function close(){
+    if(closing) return; closing=true;
+    document.removeEventListener('keydown',key,true); window.removeEventListener('hashchange',close);
+    document.body.classList.remove('lock'); opener&&opener.setAttribute('aria-expanded','false');
+    ov.classList.remove('on');
+    setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },230);
+    drawer=null;
+    if(prev&&prev.focus&&prev.isConnected){ try{ prev.focus(); }catch(e){} }
+  }
+  ov.addEventListener('mousedown',function(e){ if(e.target===ov) close(); });
+  document.addEventListener('keydown',key,true); window.addEventListener('hashchange',close);
+  document.body.classList.add('lock'); document.body.appendChild(ov);
+  opener&&opener.setAttribute('aria-expanded','true');
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ ov.classList.add('on'); }); });
+  setTimeout(function(){ var f=IM.$('.dr-i',panel); if(f) try{ f.focus(); }catch(e){} },30);
+  drawer={close:close,el:ov};
+}
 IM.buildShell=function(){
   var app=document.getElementById('app'); IM.clear(app);
-  var brand=h('a.brand-l',{href:'#/','aria-label':'إمحتب، الرئيسية'},
+  var brand=h('button.brand-l',{type:'button','aria-label':'إمحتب، القائمة','aria-haspopup':'dialog','aria-expanded':'false',onclick:function(){ openDrawer(brand); }},
     h('span.brand-m',{html:IM.pyr(6,{})}),
-    h('span.brand-t',{},h('span.latin.brand-en',{text:'Imhotep'}),h('span.display.brand-ar',{text:'إمحتب'})));
+    h('span.brand-t',{},h('span.latin.brand-en',{text:'Imhotep'}),h('span.display.brand-ar',{text:'إمحتب'})),
+    h('span.brand-c',{'aria-hidden':'true'},icon('chevd',16)));
   var nav=h('nav.nav',{'aria-label':'القائمة الرئيسية'});
   NAV.forEach(function(n){ nav.appendChild(h('a',{href:n.hash,dataset:{nav:n.id}},icon(n.icon,20),h('span',{text:n.label}))); });
   var themeBtn=h('button.iconbtn',{type:'button','aria-label':'تبديل الوضع',onclick:function(){ IM.setSetting('theme',IM.isDark()?'light':'dark'); paintTheme(); }});
@@ -108,6 +193,7 @@ IM.gate=function(onDone){
   function go(){
     var n=inp.value.replace(/\s+/g,' ').trim(); for(var i=0;i<2;i++) n=n.replace(/^(الدكتور|دكتور|dr\.?|د\.?)\s*/i,'').trim();
     if(n.length<2){ msg.textContent='اكتب اسمك (حرفين على الأقل).'; inp.focus(); return; }
+    IM.setLang(IM.lang,false);                                           /* the language on screen is the one they continue with */
     IM.setUser({name:n.slice(0,24),photo:photo,created:Date.now()});
     gate.classList.add('out'); setTimeout(function(){ gate.hidden=true; gate.classList.remove('out'); },420); onDone&&onDone();
   }
@@ -115,6 +201,7 @@ IM.gate=function(onDone){
   var gp=IM.cloudProfile?IM.cloudProfile():null;                       /* دخل بجوجل: نقترح اسمه (ممكن يغيّره) */
   if(gp&&gp.name) inp.value=String(gp.name).replace(/\s+/g,' ').trim().slice(0,24);
   var card=h('div.g-card.rv',{role:'dialog','aria-modal':'true','aria-labelledby':'gH'},
+    h('div.g-lang',{},IM.langSeg()),
     h('div.g-mark',{html:IM.pyr(6,{anim:true})}),
     h('div.eyebrow',{text:'IMHOTEP · إمحتب'}),
     h('h1#gH.display',{text:'أنشئ حسابك'}),
@@ -147,6 +234,8 @@ IM.settingsDialog=function(focusSection){
   var saveName=h('button.btn.sm',{type:'button',onclick:function(){ var n=nameIn.value.replace(/\s+/g,' ').trim(); if(n.length<2){ IM.toast('الاسم قصير.',{kind:'bad'}); return; } IM.setUser(Object.assign({},IM.st.user,{name:n.slice(0,24)})); IM.toast('اتحفظ الاسم.',{icon:'check'}); }},'حفظ الاسم');
   var imp=h('input',{type:'file',accept:'application/json,.json',hidden:true,onchange:function(){ var f=imp.files&&imp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ var res=IM.importAll(String(r.result)); IM.toast(res.msg,{kind:res.ok?'':'bad',icon:res.ok?'check':'warn'}); }; r.readAsText(f); imp.value=''; }});
   var body=h('div.set',{},
+    h('section',{},h('h3',{text:'اللغة'}),
+      row('لغة الموقع',IM.langSeg(),'تغيير اللغة بيعيد تحميل الصفحة، وتقدّمك محفوظ.')),
     h('section',{},h('h3',{text:'المظهر'}),
       row('الوضع',seg([['auto','تلقائي'],['light','نهاري'],['dark','ليلي']],st.theme,function(v){ IM.setSetting('theme',v); })),
       row('حجم الخط',h('div.set-sl',{},fs,fsOut)),

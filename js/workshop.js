@@ -66,14 +66,14 @@ IM.screens.workshop=function(view){
         var cur=selSet(st.sid).slice(); if(full){ cur=cur.filter(function(x){ return !p.secs.some(function(s){return s.id===x}) }); } else { p.secs.forEach(function(s){ if(cur.indexOf(s.id)<0) cur.push(s.id) }); }
         st.secs[st.sid]=cur; persist(); render(); }},
         h('span.tile-top',{},
-          h('span.tile-t',{},h('span.tile-en',{text:p.en}),h('span.muted.tile-ar',{text:p.ar}),h('span.mono.muted.tile-n',{text:p.n+' سؤال'+(p.n!==p.total?' ('+(p.total-p.n)+' خارج)':'')})),
+          h('span.tile-t',{},h('span.tile-en',{text:p.en}),(IM.lang==='en'?null:h('span.muted.tile-ar',{text:p.ar})),h('span.mono.muted.tile-n',{text:p.n+' سؤال'+(p.n!==p.total?' ('+(p.total-p.n)+' خارج)':'')})),
           IM.tp(t.on,44,4)),
         h('span.tile-state',{},icon(full?'check':(some?'list':'plus'),14),state),
         p.secs.length>1?h('span.tile-more',{role:'button',tabindex:0,onclick:function(e){ e.stopPropagation(); st.open[p.id]=!st.open[p.id]; render(); },onkeydown:function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); e.stopPropagation(); st.open[p.id]=!st.open[p.id]; render(); } }},icon(st.open[p.id]?'chevu':'chevd',14),'الأقسام ('+p.secs.length+')'):null);
       grid.appendChild(tile);
       if(st.open[p.id]){
         var box=h('div.secs.'+S.cls);
-        p.secs.forEach(function(s){ var on=!!secSet[s.id]; box.appendChild(h('button.tog'+(on?'.on':''),{type:'button','aria-pressed':String(on),onclick:function(){ var cur=selSet(st.sid).slice(), i=cur.indexOf(s.id); if(i>-1) cur.splice(i,1); else cur.push(s.id); st.secs[st.sid]=cur; persist(); render(); }},s.en+(s.ar&&s.ar!==s.en?' · '+s.ar:''),h('span.mono.tog-n',{text:s.n}))); });
+        p.secs.forEach(function(s){ var on=!!secSet[s.id]; box.appendChild(h('button.tog'+(on?'.on':''),{type:'button','aria-pressed':String(on),onclick:function(){ var cur=selSet(st.sid).slice(), i=cur.indexOf(s.id); if(i>-1) cur.splice(i,1); else cur.push(s.id); st.secs[st.sid]=cur; persist(); render(); }},s.en+(s.ar&&s.ar!==s.en&&IM.lang!=='en'?' · '+s.ar:''),h('span.mono.tog-n',{text:s.n}))); });
         grid.appendChild(box);
       }
     });

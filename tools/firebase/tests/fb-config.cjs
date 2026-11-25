@@ -20,7 +20,7 @@ async function run(b, origin, basePath) {
     other.push(u.hostname); return route.abort();               /* everything else (fonts, analytics, supabase, firebase) is blocked */
   });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.addInitScript(() => { try { localStorage.setItem('im_seen', JSON.stringify({ 'tour-v1': 1, 'ann-honor-1':1,'ann-fix-1120':1, 'ann-honor-ready': 1 })); } catch (e) {} });
+  await p.addInitScript(() => { try { localStorage.setItem('im_lang','ar'); localStorage.setItem('im_seen', JSON.stringify({ 'tour-v1': 1, 'ann-honor-1':1,'ann-fix-1120':1, 'ann-honor-ready': 1 })); } catch (e) {} });
   await p.goto(origin + basePath + 'index.html?fb=1', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => window.IM && IM.cloudState, { timeout: 60000 }).catch(() => {}); await p.waitForTimeout(1500);
   const st = await p.evaluate(() => ({ prov: (IM.cloudState && IM.cloudState().provider) || null, cfg: !!(window.IM.CLOUD && IM.CLOUD.fb && IM.CLOUD.fb.projectId) }));

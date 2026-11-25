@@ -363,9 +363,11 @@ function drawWall(){
   var n=countAns(), has=!!IM.st.user||hasProgress(), mig=!!C.mig, msg=h('p.g-msg',{role:'alert'});
   var b=h('button.btn.primary.g-go.cl-wall-btn',{type:'button',onclick:function(){
     b.disabled=true; msg.textContent='';
+    IM.setLang(IM.lang,false);                                        /* شاف اختيار اللغة هنا: اللي على الشاشة هو اللي هيكمّل بيه */
     IM.cloudSignIn().then(null,function(){ b.disabled=false; msg.textContent='تعذّر فتح تسجيل الدخول. جرّب تاني.'; });
   }},gIcon(),h('span',{text:(has||mig)?'ادخل بحساب جوجل وكمّل':'ادخل بحساب جوجل'}));
   var kids=[
+    h('div.g-lang',{},IM.langSeg()),
     h('div.g-mark',{html:IM.pyr(6,{anim:true})}),
     h('div.eyebrow',{text:'IMHOTEP · إمحتب'}),
     h('h1#gH.display',{text:mig?'سجّل دخولك بجوجل مرة واحدة':(has?'سجّل دخولك بجوجل عشان تكمّل':'ادخل بحساب جوجل')}),

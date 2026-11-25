@@ -251,3 +251,4 @@ a{color:inherit}
    .pyr.intro .t{opacity:1}
    .water{transform:translateY(10px)}
 }
+:root[dir="ltr"] .sw:checked::after{transform:translateX(20px)}

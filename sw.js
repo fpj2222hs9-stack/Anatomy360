@@ -1,9 +1,9 @@
 /* Imhotep · إمحتب — offline layer. Cache-first for the app and the question files, so the site works without internet after the first visit.
    Bump VERSION when you replace any file so devices fetch the new ones. */
-var VERSION='imhotep-v31';
+var VERSION='imhotep-v32';
 var CORE=['./','index.html','manifest.webmanifest',
   'css/design.css','css/app.css','css/screens.css','css/book.css','css/print.css','css/tour.css','css/pages.css','css/cartouche.css','css/horus-chat.css',
-  'js/core.js','js/fixes.js','js/bank.js','js/state.js','js/ui.js','js/home.js','js/workshop.js','js/session.js','js/result.js','js/report.js','js/papyrus.js','js/scales.js','js/library.js','js/printing.js','js/mixed.js','js/about.js','js/notify.js','js/level.js','js/weekly.js','js/cartouche.js','js/cartouche-page.js','js/board-config.js','js/board.js','js/cloud-config.js','js/cloud-sb.js','js/cloud-fb.js','js/cloud.js','js/ai-config.js','js/horus.js','js/ai.js','js/horus-chat.js','js/tour.js','js/app.js',
+  'js/i18n-en.js','js/i18n.js','js/core.js','js/fixes.js','js/bank.js','js/state.js','js/ui.js','js/home.js','js/workshop.js','js/session.js','js/result.js','js/report.js','js/papyrus.js','js/scales.js','js/library.js','js/printing.js','js/mixed.js','js/about.js','js/notify.js','js/level.js','js/weekly.js','js/cartouche.js','js/cartouche-page.js','js/board-config.js','js/board.js','js/cloud-config.js','js/cloud-sb.js','js/cloud-fb.js','js/cloud.js','js/ai-config.js','js/horus.js','js/ai.js','js/horus-chat.js','js/tour.js','js/app.js',
   'subjects/anatomy/anatomy.content.js','subjects/anatomy/data.js','subjects/histology/histology.content.js','subjects/biochemistry/biochemistry.content.js','subjects/biochemistry/data.js','subjects/physiology/physiology.content.js',
   'assets/fonts/33e8a56e54ce.woff','assets/fonts/b92ac6badd05.woff','assets/icons/icon.svg','assets/icons/icon-192.png','assets/icons/icon-512.png','privacy.html','terms.html'];
 self.addEventListener('install',function(e){

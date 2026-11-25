@@ -157,3 +157,9 @@ html.calm .hc-body{scroll-behavior:auto}
 html.calm .hc,html.calm .hc *,html.calm .hc-fab,html.calm .hc-fab *{animation:none !important;transition:none !important}
 @media (prefers-reduced-motion:reduce){ .hc,.hc *,.hc-fab,.hc-fab *{animation:none !important;transition:none !important} }
 @media print{ .hc,.hc-fab{display:none !important} }
+/* English (LTR): the Horus button and panel sit on the right, the mirror of the Arabic layout */
+:root[dir="ltr"] .hc-fab{left:auto;right:16px}
+:root[dir="ltr"] .hc-tip{left:auto;right:calc(100% + 8px)}
+:root[dir="ltr"] .hc{left:auto;right:16px}
+@media (max-width:640px){ :root[dir="ltr"] .hc{left:0;right:0} }
+:root[dir="ltr"] .hc{transform-origin:right bottom}

@@ -22,7 +22,7 @@ async function mk(b,o){
   });
   await ctx.route('https://accounts.google.com/**',async route=>{ const u=new URL(route.request().url()); const j=await (await fetch(MOCK+'/__google?'+u.searchParams)).json(); route.fulfill({status:302,headers:{location:j.location}}); });
   if(o.pilot) await ctx.route('**/js/ai-config.js',async r=>{ const res=await r.fetch(); const t=(await res.text()).replace('chat:{on:true,pilot:false','chat:{on:true,pilot:true'); r.fulfill({response:res,body:t}); });   /* الإعداد الفعلي pilot:false (مفتوح للكل)، فحالة التجربة بتتحاكى هنا */
-  await ctx.addInitScript(()=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',year:1})); }catch(e){} });
+  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_lang','ar'); if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',year:1})); }catch(e){} });
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
   p.on('console',m=>{ if(m.type()==='error'&&!/fonts\.g|Failed to load resource|googletagmanager|net::ERR/.test(m.text())) errs.push('CONSOLE '+m.text()); });
   return {ctx,p};

@@ -9,7 +9,7 @@ const CFG=(o)=>JSON.stringify(Object.assign({on:true,required:true,url:MOCK,anon
 async function mk(b,o){
   o=o||{}; const ctx=await b.newContext({viewport:{width:o.w||1100,height:900}});
   await ctx.route('**/js/cloud-config.js',r=>r.fulfill({contentType:'application/javascript',body:'window.IM.CLOUD='+CFG(o.cfg)+';'}));
-  await ctx.addInitScript((a)=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); if(a.user&&!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:a.user,v:1,created:Date.now()-864e5*30})); }catch(e){} },{user:o.noUser?null:(o.user||'محمد سيف')});
+  await ctx.addInitScript((a)=>{ try{ localStorage.setItem('im_lang','ar'); if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); if(a.user&&!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:a.user,v:1,created:Date.now()-864e5*30})); }catch(e){} },{user:o.noUser?null:(o.user||'محمد سيف')});
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message)); p.__net=[]; p.on('request',r=>{ const u=r.url(); if(u.startsWith(MOCK)||u.includes(':8799')) p.__net.push(r.method()+' '+u.replace(MOCK,'').slice(0,60)); });
   return {ctx,p};
 }

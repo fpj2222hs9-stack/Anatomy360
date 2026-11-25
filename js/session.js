@@ -37,7 +37,7 @@ IM.questionBlock=function(Q,o){
   chips.appendChild(IM.statusChip(st));
   if(o.item&&o.item.r) chips.appendChild(h('span.chip.ok',{title:'سؤال غلطته قبل شوية ورجع'},icon('reset',14),'رجع تاني'));
   var sec=IM.bank.subs[Q.sid].secs[Q.sec];
-  var num=h('div.q-num',{},h('span.mono.q-n',{text:Q.n?'س '+Q.n:''}),h('span.muted.q-s',{text:sec?(sec.en+(sec.ar?' · '+sec.ar:'')):''}));
+  var num=h('div.q-num',{},h('span.mono.q-n',{text:Q.n?'س '+Q.n:''}),h('span.muted.q-s',{text:sec?(sec.en+(sec.ar&&IM.lang!=='en'?' · '+sec.ar:'')):''}));
   var stem=h('p.q-stem',{dir:'ltr',lang:'en',text:Q.stem});
   var fig=Q.fig?h('img.qfig',{src:IM.asset(Q.fig),alt:'شكل السؤال',loading:'lazy'}):null;
   var opts=h('div.q-opts',{dir:'ltr',lang:'en'}), btns={};
@@ -307,8 +307,8 @@ IM.screens.session=function(view,params){
     var Q=Qof(it), idx=-1;
     if(/^[1-6]$/.test(k)) idx=+k-1; else if(/^[a-fA-F]$/.test(k)&&!e.shiftKey) idx=LET.indexOf(k.toLowerCase());
     if(idx>-1&&Q.opts[idx]){ e.preventDefault(); var B=IM.$('.opt[data-o="'+Q.opts[idx].o+'"]',main); if(B&&!B.disabled) pick(it,Q.opts[idx].o); return; }
-    if(k==='Enter'||k==='ArrowLeft'){ e.preventDefault(); if(resOf(it)||spec||water) next(); }
-    else if(k==='ArrowRight'||k==='Backspace'){ e.preventDefault(); prev(); }
+    if(k==='Enter'||k===(IM.lang==='en'?'ArrowRight':'ArrowLeft')){ e.preventDefault(); if(resOf(it)||spec||water) next(); }
+    else if(k===(IM.lang==='en'?'ArrowLeft':'ArrowRight')||k==='Backspace'){ e.preventDefault(); prev(); }
     else if(k==='s'||k==='S'){ e.preventDefault(); IM.toggleMark(Q.id); if(qb) qb.paint(); paintHead(); }
     else if((k==='h'||k==='H')&&!water&&!spec){ e.preventDefault(); hint(it); }
     else if(k==='m'||k==='M'){ mapOpen=!mapOpen; side.classList.toggle('open',mapOpen); }

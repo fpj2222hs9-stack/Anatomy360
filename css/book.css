@@ -120,3 +120,6 @@
   .lib-nav{top:62px}
   .fc-card{padding:16px;min-height:260px}
 }
+/* English interface: the two CSS-generated hints */
+:root[lang="en"] .book.recall .bk-sec:not(.shown) .bk-top::after{content:"Tap to reveal"}
+:root[lang="en"] .book.recall .bk-sec.has-tbl:not(.shown) .bk-top::after{content:"Tap a cell to reveal it · or the heading to reveal all"}

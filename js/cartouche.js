@@ -153,15 +153,15 @@ IM.cartoPNG=function(){
     boxes.forEach(function(b,i){
       var px=bx+i*(bw+gap); x.fillStyle='rgba(255,255,255,.06)'; x.strokeStyle='rgba(226,180,69,.45)'; x.lineWidth=2;
       x.beginPath(); if(x.roundRect) x.roundRect(px,by,bw,128,18); else x.rect(px,by,bw,128); x.fill(); x.stroke();
-      x.direction='rtl'; x.fillStyle='#B8C4DE'; x.font=BODY(26); x.fillText(b[0],px+bw/2,by+42);
+      x.direction=IM.lang==='en'?'ltr':'rtl'; x.fillStyle='#B8C4DE'; x.font=BODY(26); x.fillText(IM.tr(b[0]),px+bw/2,by+42);
       x.direction='ltr'; x.fillStyle='#F6DD8A'; x.font=b[2]?MONO(36):DISP(56); x.fillText(b[1],px+bw/2,by+100);
     });
     /* achievements */
-    x.direction='rtl'; x.fillStyle='#DCE4F5'; x.font=BODY(30);
+    x.direction=IM.lang==='en'?'ltr':'rtl'; x.fillStyle='#DCE4F5'; x.font=BODY(30);
     var sealTxt=L.sealsOf?(L.seals+' من '+L.sealsOf+' أختام'):'';
-    x.fillText('ثبّت '+L.secured.toLocaleString('en-US')+' سؤال  ·  '+L.litAll+' يوم شروق'+(sealTxt?'  ·  '+sealTxt:''),W/2,1214);
-    x.fillStyle='#8FA0C6'; x.font=BODY(24); x.fillText('من هنا بدأ الطب',W/2,1272);
-    x.fillStyle='#6F82AD'; x.font=BODY(20); x.fillText('خرطوشة تحفيزية بتتحسب على الجهاز من التقدّم المسجّل. مش شهادة رسمية.',W/2,1306);
+    x.fillText(IM.tr('ثبّت '+L.secured.toLocaleString('en-US')+' سؤال  ·  '+L.litAll+' يوم شروق'+(sealTxt?'  ·  '+sealTxt:'')),W/2,1214);
+    x.fillStyle='#8FA0C6'; x.font=BODY(24); x.fillText(IM.tr('من هنا بدأ الطب'),W/2,1272);
+    x.fillStyle='#6F82AD'; x.font=BODY(20); x.fillText(IM.tr('خرطوشة تحفيزية بتتحسب على الجهاز من التقدّم المسجّل. مش شهادة رسمية.'),W/2,1306);
     return new Promise(function(res,rej){ cv.toBlob(function(b){ b?res(b):rej(new Error('blob')); },'image/png'); });
   });
 };

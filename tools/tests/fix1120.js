@@ -11,9 +11,9 @@ const BEFORE={ 'b05-036':['a','b'],'b08-033':['d',null],'b08-034':['b',null],'b0
 
 async function mk(b,o){
   o=o||{}; const ctx=await b.newContext({viewport:o.vp||{width:1100,height:900},colorScheme:o.dark?'dark':'light'});
-  await ctx.addInitScript((o)=>{ try{
+  await ctx.addInitScript((o)=>{ try{ localStorage.setItem('im_lang','ar');
     if(sessionStorage.getItem('__fx_init')) return; sessionStorage.setItem('__fx_init','1');
-    if(o.clear){ localStorage.clear(); }
+    if(o.clear){ localStorage.clear(); localStorage.setItem('im_lang','ar'); }
     localStorage.setItem('im_seen',JSON.stringify(Object.assign({'tour-v1':1,'ann-honor-1':1},o.seen||{})));
     localStorage.setItem('im_user',JSON.stringify({name:'طالب',v:1,created:o.created||(Date.now()-864e5*30)}));
     Object.keys(o.ls||{}).forEach(k=>localStorage.setItem(k,JSON.stringify(o.ls[k])));

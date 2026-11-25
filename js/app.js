@@ -44,6 +44,7 @@ function start(){
     var app=document.getElementById('app'); app.hidden=false;
     function enter(){
       IM.route(); IM.splash(false);
+      if(IM.langPromptMaybe) IM.langPromptMaybe();                 /* اللي كان بيستخدم الموقع قبل النسخة الإنجليزي: اختيار لغة مرة واحدة */
       if(IM.tourMaybe) IM.tourMaybe();
       if(IM.boardAnnounceMaybe) IM.boardAnnounceMaybe();       /* إعلان لوحة الشرف: مرة واحدة، وبعد الجولة للجُدد */
       var fixAnn=IM.fixAnnounceMaybe?IM.fixAnnounceMaybe():false;      /* إشعار تصحيحات الأسئلة: مرة واحدة وبيشمل «جاوبتها بالقديم» فمفيش داعي للتوست معاه */

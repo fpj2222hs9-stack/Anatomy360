@@ -22,7 +22,7 @@ async function mk(b,o){
     route.fulfill({status:r.status,headers:Object.assign({'content-type':'application/json'},CORS),body:await r.text()});
   });
   await ctx.route('https://accounts.google.com/**',async route=>{ const u=new URL(route.request().url()); const j=await (await fetch(MOCK+'/__google?'+u.searchParams)).json(); route.fulfill({status:302,headers:{location:j.location}}); });
-  await ctx.addInitScript((a)=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1,created:Date.now()-864e5*30}));
+  await ctx.addInitScript((a)=>{ try{ localStorage.setItem('im_lang','ar'); if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',v:1,created:Date.now()-864e5*30}));
     if(a.seed&&!localStorage.getItem('__seeded')){ localStorage.setItem('__seeded','1'); Object.keys(a.seed).forEach(function(k){ localStorage.setItem(k,a.seed[k]); }); } }catch(e){} },{seed:o.seed||null});
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
   return {ctx,p,st};

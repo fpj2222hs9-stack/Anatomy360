@@ -48,7 +48,7 @@ IM.screens.scales=function(view){
       var pa=IM.statsPart(sid,p.id), pt=IM.tiers(pa), isOpen=!!open[p.id];
       var row=h('div.sx-p'+(isOpen?'.open':''),{},
         h('button.sx-ph',{type:'button','aria-expanded':String(isOpen),onclick:function(){ open[p.id]=!open[p.id]; render(); }},
-          h('span.sx-pn',{},h('b.sx-pen',{text:p.en}),h('span.muted',{text:p.ar})),
+          h('span.sx-pn',{},h('b.sx-pen',{text:p.en}),(IM.lang==='en'?null:h('span.muted',{text:p.ar}))),
           IM.tp(pt.on,36,4),
           h('span.sx-pb',{},h('span.bar.sm',{},h('i',{style:'width:'+IM.pct(pa.answered,pa.total)+'%;background:var(--p)'})),h('span.mono.muted',{text:pa.answered+'/'+pa.total})),
           h('span.sx-pa.mono',{text:pa.answered?pa.acc+'%':'—'}),
@@ -57,7 +57,7 @@ IM.screens.scales=function(view){
         var inner=h('div.sx-secs');
         p.secs.forEach(function(s){
           var sa=IM.statsSec(sid,s.id);
-          inner.appendChild(h('div.sx-s',{},h('span.sx-sn',{dir:'ltr',lang:'en',text:s.en+(s.ar&&s.ar!==s.en?' · '+s.ar:'')}),h('span.sx-pb',{},h('span.bar.sm',{},h('i',{style:'width:'+IM.pct(sa.answered,sa.total)+'%;background:var(--p)'})),h('span.mono.muted',{text:sa.answered+'/'+sa.total})),h('span.sx-pa.mono',{text:sa.answered?sa.acc+'%':'—'}),h('button.btn.ghost.sm',{type:'button',onclick:function(){ startFor(sid,[s.id]); }},'تدرّب')));
+          inner.appendChild(h('div.sx-s',{},h('span.sx-sn',{dir:'ltr',lang:'en',text:s.en+(s.ar&&s.ar!==s.en&&IM.lang!=='en'?' · '+s.ar:'')}),h('span.sx-pb',{},h('span.bar.sm',{},h('i',{style:'width:'+IM.pct(sa.answered,sa.total)+'%;background:var(--p)'})),h('span.mono.muted',{text:sa.answered+'/'+sa.total})),h('span.sx-pa.mono',{text:sa.answered?sa.acc+'%':'—'}),h('button.btn.ghost.sm',{type:'button',onclick:function(){ startFor(sid,[s.id]); }},'تدرّب')));
         });
         inner.appendChild(h('div.sx-ft',{},h('button.btn.sm',{type:'button',onclick:function(){ startFor(sid,p.secs.map(function(s){return s.id})); }},icon('play',16),'تدرّب على اللوح كله')));
         row.appendChild(inner);

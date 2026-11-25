@@ -57,7 +57,7 @@ function reader(view,sid,chId){
   var wrap=h('div.lib-r.'+cls); view.appendChild(wrap);
   var book=h('div.book'+(P.recall?'.recall':'')+(P.hideaids?'.hideaids':''));
   var nav=h('nav.lib-nav',{'aria-label':'الفصول'});
-  S.chapters.forEach(function(c){ nav.appendChild(h('a.tog'+(c.id===ch.id?'.on':'')+(readMap(sid)[c.id]?'.read':''),{href:'#/library/'+sid+'/'+c.id,'aria-current':c.id===ch.id?'page':null,title:c.ar},c.num+' · '+c.en)); });
+  S.chapters.forEach(function(c){ nav.appendChild(h('a.tog'+(c.id===ch.id?'.on':'')+(readMap(sid)[c.id]?'.read':''),{href:'#/library/'+sid+'/'+c.id,'aria-current':c.id===ch.id?'page':null,title:IM.lang==='en'?null:c.ar},c.num+' · '+c.en)); });
   var rec=h('input.sw',{type:'checkbox',checked:!!P.recall,'aria-label':'وضع الاسترجاع',onchange:function(){ setPref('recall',rec.checked); book.classList.toggle('recall',rec.checked); if(!rec.checked) IM.$$('.bk-sec',book).forEach(hideAll); }});
   var hid=h('input.sw',{type:'checkbox',checked:!!P.hideaids,'aria-label':'إخفاء الصناديق التوضيحية',onchange:function(){ setPref('hideaids',hid.checked); book.classList.toggle('hideaids',hid.checked); }});
   function sw(l,i){ return h('label.field.sw-f',{style:'gap:14px'},h('span.sw-l',{text:l}),i); }

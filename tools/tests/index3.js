@@ -13,9 +13,9 @@ async function mk(b, o) {
   o = o || {};
   const ctx = await b.newContext({ viewport: o.vp || { width: 1100, height: 900 }, colorScheme: o.dark ? 'dark' : 'light' });
   if (o.board) await ctx.route('**/js/board-config.js', r => r.fulfill({ contentType: 'application/javascript', body: "window.IM.BOARD_URL='" + BOARD + "';" }));
-  await ctx.addInitScript((o) => { try {
+  await ctx.addInitScript((o) => { try { localStorage.setItem('im_lang','ar');
     if (sessionStorage.getItem('__i3')) return; sessionStorage.setItem('__i3', '1');
-    localStorage.clear();
+    localStorage.clear(); localStorage.setItem('im_lang','ar');
     localStorage.setItem('im_seen', JSON.stringify({ 'tour-v1': 1, 'ann-honor-1': 1, 'ann-honor-ready': 1, 'ann-fix-1120': 1 }));
     localStorage.setItem('im_user', JSON.stringify({ name: o.name || 'طالب', v: 1, created: Date.parse('2026-09-01') }));
   } catch (e) {} }, o);

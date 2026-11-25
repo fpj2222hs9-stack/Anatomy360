@@ -33,7 +33,7 @@ var STEPS=[
    text:'أول حاجة في الورشة هي الأسلوب اللي هتحل بيه. تقدر تغيّره في أي وقت قبل ما تدوس «ابدأ لفافة».',
    uses:['تدريب الألواح: الأسئلة بالترتيب وكل إجابة بتتصحّح فورًا','خلط الرمال: أسئلة متخلطة من ألواح مختلفة والأضعف عندك بيظهر أكتر','الساعة المائية: امتحان بوقت، ومفيش تصحيح غير في الآخر']},
 
-  {id:'subject',route:'#/train',sel:[function(){ var x=document.querySelector('.ws select[aria-label="المادة"]'); return x?x.closest('section'):null; }],icon:'book',sub:'إزاي تبدأ لفافة · 3 من 7',title:'اختار المادة',
+  {id:'subject',route:'#/train',sel:[function(){ var x=document.querySelector('.ws select[aria-label="'+IM.tr('المادة')+'"]'); return x?x.closest('section'):null; }],icon:'book',sub:'إزاي تبدأ لفافة · 3 من 7',title:'اختار المادة',
    text:'من قايمة «المادة» اختار المادة اللي هتذاكرها. كل مادة ليها ألواحها وهرمها لوحده.',
    uses:['المادة اللي لسه ماتنزلتش مكتوب جنبها «قريبًا» ومش بتتختار','تحت القايمة اسم الدكتور صاحب أسئلة المادة','اللفافة بتتبني من مادة واحدة. عايز أكتر من مادة؟ استخدم «اللفافة الشاملة»']},
 
@@ -256,8 +256,8 @@ function onKey(e){
   if(!T) return;
   var k=e.key, act=document.activeElement, onBtn=act&&act.tagName==='BUTTON'&&T.card.contains(act);
   if(k==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); end(true); return; }
-  if(k==='ArrowLeft'){ e.preventDefault(); e.stopImmediatePropagation(); next(); return; }
-  if(k==='ArrowRight'){ e.preventDefault(); e.stopImmediatePropagation(); prev(); return; }
+  if(k===(IM.lang==='en'?'ArrowRight':'ArrowLeft')){ e.preventDefault(); e.stopImmediatePropagation(); next(); return; }
+  if(k===(IM.lang==='en'?'ArrowLeft':'ArrowRight')){ e.preventDefault(); e.stopImmediatePropagation(); prev(); return; }
   if(k==='Tab'){
     e.stopImmediatePropagation();
     var f=Array.prototype.slice.call(T.card.querySelectorAll('button')); if(!f.length) return;

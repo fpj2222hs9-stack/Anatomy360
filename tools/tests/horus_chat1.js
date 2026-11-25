@@ -13,7 +13,7 @@ async function mk(b,o){
   /* the shipped js/ai-config.js has chat.pilot:false (Horus open to every signed-in student), so the pilot tests force pilot:true here; {realAi:true} uses the file as shipped */
   if(!o.realAi) await ctx.route('**/js/ai-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM=window.IM||{};window.IM.AI={on:false,base:'ai/',chat:{on:true,pilot:true,path:'/functions/v1/horus'}};"}));
   await ctx.route('**/js/cloud-config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.IM.CLOUD={on:true,pilot:false,required:false,url:'"+MOCK+"',anon:'sb_publishable_testkey',debounceMs:300,minGapMs:0,pollMs:600000};"}));
-  await ctx.addInitScript(()=>{ try{ if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',year:1})); }catch(e){} });
+  await ctx.addInitScript(()=>{ try{ localStorage.setItem('im_lang','ar'); if(!localStorage.getItem('im_seen')) localStorage.setItem('im_seen',JSON.stringify({'tour-v1':1,'ann-honor-1':1,'ann-fix-1120':1,'ann-honor-ready':1})); if(!localStorage.getItem('im_user')) localStorage.setItem('im_user',JSON.stringify({name:'محمد سيف',year:1})); }catch(e){} });
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push('PAGEERR '+e.message));
   p.on('console',m=>{ if(m.type()==='error'&&!/fonts\.g|Failed to load resource|googletagmanager|net::ERR/.test(m.text())) errs.push('CONSOLE '+m.text()); });
   return {ctx,p};

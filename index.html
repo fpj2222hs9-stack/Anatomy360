@@ -26,6 +26,7 @@
 if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);
 if(s.fs)r.style.setProperty('--fs',String(Math.min(1.35,Math.max(.85,+s.fs||1))));
 if(s.motion==='off')r.className='calm';
+var L=localStorage.getItem('im_lang');if(L==='en'){r.lang='en';r.dir='ltr';}
 var d=s.theme==='dark'||(s.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
 var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',d?'#0A1322':'#F6EEDA');}catch(e){}})();
 </script>
@@ -50,6 +51,8 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
 <!--@im-bank-->
 <!--/@im-bank-->
 <!--@im-js-->
+<script src="js/i18n-en.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/core.js"></script>
 <script src="js/fixes.js"></script>
 <script src="js/bank.js"></script>

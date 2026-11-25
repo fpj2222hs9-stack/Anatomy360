@@ -98,7 +98,7 @@ IM.screens.mixed=function(view){
             var cur=selParts(sid).slice(), i=cur.indexOf(p.id);
             if(i>-1){ if(cur.length===1){ IM.toast('لازم يفضل لوح واحد على الأقل في '+IM.subName(sid)+'.',{kind:'bad'}); return; } cur.splice(i,1); } else cur.push(p.id);
             setTabs(sid,cur); render(); }},
-            h('span.tile-top',{},h('span.tile-t',{},h('span.tile-en',{text:p.en}),h('span.muted.tile-ar',{text:p.ar}),h('span.mono.muted.tile-n',{text:p.n+' سؤال'}))),
+            h('span.tile-top',{},h('span.tile-t',{},h('span.tile-en',{text:p.en}),(IM.lang==='en'?null:h('span.muted.tile-ar',{text:p.ar})),h('span.mono.muted.tile-n',{text:p.n+' سؤال'}))),
             h('span.tile-state',{},icon(on?'check':'plus',14),on?'داخل اللفافة':'مش داخل')));
         });
         box.appendChild(grid);

@@ -21,13 +21,13 @@ IM.printDoc=function(o){
   var idx=[], last=null;
   ids.forEach(function(id,i){ var Q=IM.bank.q[id]; var qk=Q.sid+':'+Q.sec; if(qk!==last){ last=qk; var sec=(IM.bank.subs[Q.sid]||S).secs[Q.sec]; idx.push({sec:sec,at:i+1,n:0}); } idx[idx.length-1].n++; });
   var tb=h('table.pd-idx',{},h('thead',{},h('tr',{},h('th',{text:'القسم'}),h('th',{text:'من سؤال'}),h('th',{text:'العدد'}))));
-  var tbody=h('tbody'); idx.forEach(function(x){ tbody.appendChild(h('tr',{},h('td',{dir:'ltr',lang:'en',text:x.sec.en+(x.sec.ar&&x.sec.ar!==x.sec.en?' · '+x.sec.ar:'')}),h('td.mono',{text:String(x.at)}),h('td.mono',{text:String(x.n)}))); }); tb.appendChild(tbody);
+  var tbody=h('tbody'); idx.forEach(function(x){ tbody.appendChild(h('tr',{},h('td',{dir:'ltr',lang:'en',text:x.sec.en+(x.sec.ar&&x.sec.ar!==x.sec.en&&IM.lang!=='en'?' · '+x.sec.ar:'')}),h('td.mono',{text:String(x.at)}),h('td.mono',{text:String(x.n)}))); }); tb.appendChild(tbody);
   doc.appendChild(h('section.pd-index',{},h('h2',{text:'الفهرس'}),tb));
   /* questions */
   var qs=h('section.pd-qs',{}); last=null;
   ids.forEach(function(id,i){
     var Q=IM.bank.q[id];
-    var qk=Q.sid+':'+Q.sec; if(qk!==last){ last=qk; var sec=(IM.bank.subs[Q.sid]||S).secs[Q.sec]; qs.appendChild(h('h3.pd-sec',{dir:'ltr',lang:'en',text:sec.en+(sec.ar&&sec.ar!==sec.en?' · '+sec.ar:'')})); }
+    var qk=Q.sid+':'+Q.sec; if(qk!==last){ last=qk; var sec=(IM.bank.subs[Q.sid]||S).secs[Q.sec]; qs.appendChild(h('h3.pd-sec',{dir:'ltr',lang:'en',text:sec.en+(sec.ar&&sec.ar!==sec.en&&IM.lang!=='en'?' · '+sec.ar:'')})); }
     var box=h('div.pd-q'), opts=h('div.pd-o',{dir:'ltr',lang:'en'});
     Q.opts.forEach(function(op){ opts.appendChild(h('div.pd-opt',{},h('span.pd-k',{text:op.o.toUpperCase()}),h('span',{text:op.t}))); });
     box.appendChild(h('div.pd-qh',{},h('span.pd-n',{text:String(i+1)}),Q.tags.length?h('span.pd-tag',{text:Q.tags.join(' · ')}):null));

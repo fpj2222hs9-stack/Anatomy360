@@ -194,3 +194,62 @@ textarea.field-i,.rpt-ta{min-height:88px;padding:10px 14px;line-height:1.5}
   .toasts{bottom:96px}
   .stage-glow{width:420px;height:420px;right:-60px}
 }
+
+/* ---------- logo menu (side drawer) · language switch · first-time language prompt ---------- */
+button.brand-l{border:0;background:none;padding:0;margin:0;font:inherit;cursor:pointer;text-align:start;border-radius:var(--r)}
+button.brand-l:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.brand-c{display:inline-flex;color:var(--ink-3);margin-inline-start:-2px;transition:transform .2s}
+.brand-l[aria-expanded="true"] .brand-c{transform:rotate(180deg)}
+.dr-ov{position:fixed;inset:0;z-index:190;background:rgba(10,19,34,.5);backdrop-filter:blur(3px);opacity:0;transition:opacity .22s}
+.dr{position:absolute;top:0;bottom:0;inset-inline-start:0;width:min(340px,88vw);display:flex;flex-direction:column;gap:6px;padding:16px 14px calc(16px + env(safe-area-inset-bottom));background:var(--surface);border-inline-end:1px solid var(--line-2);box-shadow:var(--shadow);overflow:auto;transform:translateX(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+:root[dir="ltr"] .dr{transform:translateX(-100%)}
+.dr-ov.on{opacity:1}
+.dr-ov.on .dr,:root[dir="ltr"] .dr-ov.on .dr{transform:none}
+.calm .dr-ov,.calm .dr{transition:none}
+.dr-h{display:flex;align-items:center;gap:12px;padding:2px 4px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.dr-h .brand-m .pyr{width:38px;height:38px}
+.dr-h .brand-t{flex:1;min-width:0}
+.dr nav{display:flex;flex-direction:column;gap:2px}
+.dr-i{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 12px;border:0;border-radius:var(--r);background:none;color:var(--ink);font:600 1rem var(--f-body);text-align:start;text-decoration:none;cursor:pointer}
+.dr-i:hover{background:var(--surface-2)}
+.dr-i:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.dr-i svg{color:var(--ink-2);flex:none}
+.dr-s{margin-top:8px;padding:14px 12px 4px;border-top:1px solid var(--line)}
+.dr-s h3{display:flex;align-items:center;gap:8px;margin-bottom:10px;font:700 .9rem var(--f-body);color:var(--ink-2)}
+.dr-s .seg,.g-lang .seg,.set-r .lang-seg{display:inline-flex}
+.dr-s .seg{display:flex;width:100%}
+.dr-s .seg button{flex:1}
+.dr-s .muted{margin-top:8px;font-size:.78rem}
+.g-lang{display:flex;justify-content:center;margin-bottom:4px}
+.g-lang .seg button{min-height:34px;padding:0 16px}
+.dlg-lang{width:min(480px,100%)}
+.lp p{margin:0 0 10px;line-height:1.7;color:var(--ink-2)}
+.lp p[lang="en"]{font-size:.93rem}
+.lp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.lp-b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:84px;padding:12px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface-2);color:var(--ink);cursor:pointer;font:500 .85rem var(--f-body)}
+.lp-b b{font-size:1.5rem}
+.lp-b:hover{border-color:var(--gold)}
+.lp-b:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (max-width:420px){ .lp-grid{grid-template-columns:1fr} }
+.g-lang{position:relative;z-index:3;margin-bottom:34px}
+:root[lang="en"] .brand-t .brand-en{display:none}
+@media (min-width:761px){ :root[lang="en"] .brand-t .brand-ar{font-size:1.4rem;letter-spacing:.02em} }
+/* English labels are wider than the Arabic ones: keep the top bar on one line from tablet to desktop widths */
+@media (min-width:761px) and (max-width:1180px){
+  :root[lang="en"] .nav{flex-wrap:nowrap;gap:0}
+  :root[lang="en"] .nav a{padding:0 10px;gap:6px;font-size:.9rem;white-space:nowrap}
+  :root[lang="en"] .topbar{gap:8px}
+  :root[lang="en"] .topbar .tools{gap:6px}
+  :root[lang="en"] .brand-l{gap:8px}
+}
+@media (min-width:761px){ :root[lang="en"] .topbar{flex-wrap:nowrap} }
+@media (min-width:761px) and (max-width:1000px){
+  :root[lang="en"] .nav svg{display:none}
+  :root[lang="en"] .nav a{padding:0 8px;font-size:.86rem}
+}
+@media (min-width:761px) and (max-width:850px){ :root[lang="en"] .brand-t{display:none} }
+/* the sign-in card can be taller than the screen: centre it only when it fits (flex centring would crop its top) */
+#gate{align-items:flex-start}
+#gate .g-card{margin-block:auto}
+.g-lang{margin-bottom:26px}
+.g-lang+.g-mark{margin-top:-10px}
